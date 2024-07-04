@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Information Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #preview {
+            display: none;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 20px;
+        }
+
+        .hint {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        #logoPreview {
+            width: 256px;
+            height: 256px;
+            margin: 20px auto;
+            display: block;
+            object-fit: cover;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>exSat Registration Information Form</h1>
+    <form id="userForm">
+        <label for="name">Name (required):</label>
+        <input type="text" id="name" required>
+
+        <!-- <label for="email">Email (required):</label>
+        <input type="email" id="email" required> -->
+
+        <label for="logo">Logo Link (required):</label>
+        <input type="url" id="logo" required>
+        <p class="hint">256x256px<br>1024x1024px</p>
+
+        <label for="profile">Profile (required):</label>
+        
+        <textarea id="profile" required></textarea>
+        <p class="hint">supports markdown</p>
+
+        
+
+        <!-- <h3>Media Links (optional):</h3>
+        <label for="website">Website:</label>
+        <input type="url" id="website" required>
+
+        <label for="twitter">Twitter:</label>
+        <input type="url" id="twitter">
+
+        <label for="github">GitHub:</label>
+        <input type="url" id="github">
+
+        <label for="youtube">YouTube:</label>
+        <input type="url" id="youtube">
+
+        <label for="reddit">Reddit:</label>
+        <input type="url" id="reddit">
+
+        <label for="keybase">Keybase:</label>
+        <input type="url" id="keybase">
+
+        <label for="facebook">Facebook:</label>
+        <input type="url" id="facebook"> -->
+
+        <button type="button" onclick="showPreview()">Show Preview</button>
+    </form>
+
+    <div id="preview">
+        <h2>Preview</h2>
+        <img id="logoPreview" alt="Logo Preview">
+        <div id="previewContent"></div>
+        <button onclick="generateJSON()">Confirm and Generate JSON</button>
+        <button onclick="editForm()">Back to Edit</button>
+    </div>
+
+    <script>
+        function showPreview() {
+            const form = document.getElementById('userForm');
+            if (!form.checkValidity()) {
+                alert('Please fill in all required fields and ensure all URLs are valid.');
+                return;
+            }
+
+            const preview = document.getElementById('preview');
+            const previewContent = document.getElementById('previewContent');
+            const logoPreview = document.getElementById('logoPreview');
+            preview.style.display = 'block';
+            form.style.display = 'none';
+
+            logoPreview.src = document.getElementById('logo').value;
+
+            const fields = ['name', 'logo', 'profile'];
+            //const fields = ['name', 'email', 'logo', 'profile', 'website', 'twitter', 'github', 'youtube', 'reddit', 'keybase', 'facebook'];
+            let content = '';
+
+            fields.forEach(field => {
+                const value = document.getElementById(field).value;
+                if (value && field !== 'logo') {
+                    content += `<p><strong>${field.charAt(0).toUpperCase() + field.slice(1)}:</strong> ${value}</p>`;
+                }
+            });
+
+            previewContent.innerHTML = content;
+        }
+
+        function editForm() {
+            document.getElementById('preview').style.display = 'none';
+            document.getElementById('userForm').style.display = 'block';
+        }
+
+        function generateJSON() {
+             const fields = ['name', 'logo', 'profile'];
+            // const fields = ['name', 'email', 'logo', 'profile', 'website', 'twitter', 'github', 'youtube', 'reddit', 'keybase', 'facebook'];
+            const data = {};
+
+            fields.forEach(field => {
+                const value = document.getElementById(field).value;
+                if (value) {
+                    data[field] = value;
+                }
+            });
+
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'profile.json';
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+
+</html>
