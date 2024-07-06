@@ -1,8 +1,8 @@
 import axios from "axios";
-import { API_URL, API_SECRET } from "./constants";
+import { API_URL, API_SECRET } from "../constants";
 import fs from "fs-extra";
 import path from "path";
-import { select, input, confirm } from '@inquirer/prompts';
+import readlineSync from "readline-sync";
 
 const tempFilePath = path.join(__dirname, "keystore_path.tmp");
 
@@ -23,6 +23,7 @@ export const deleteTempFile = () => {
   }
 };
 
+
 export const axiosInstance = axios.create({
   baseURL: API_URL,
   timeout: 10000, // 10 seconds timeout
@@ -33,8 +34,8 @@ export const axiosInstance = axios.create({
 });
 
 export const retryRequest = async (
-    fn: () => Promise<any>,
-    retries = 3
+  fn: () => Promise<any>,
+  retries = 3
 ): Promise<any> => {
   for (let i = 0; i < retries; i++) {
     try {
@@ -46,10 +47,12 @@ export const retryRequest = async (
   }
 };
 
+
+
 export const listDirectories = async (currentPath: string) => {
   const files = await fs.readdir(currentPath);
   const directories = files.filter((file) =>
-      fs.statSync(path.join(currentPath, file)).isDirectory()
+    fs.statSync(path.join(currentPath, file)).isDirectory()
   );
   directories.unshift(".."); // Add parent directory option
   directories.unshift("."); // Add current directory option
@@ -61,27 +64,21 @@ const validatePath = (inputPath: string): boolean => {
 };
 
 export const selectDirPrompt = async () => {
-  const initialChoice = await select({
-    message: "\nChoose a directory to save the keystore:",
-    choices: [
-      { name: "Navigate To Select", value: "1" },
-      { name: "Manually Enter a directory path", value: "2" },
-    ],
-  });
+  const initialChoice = readlineSync.question(
+    "\n[1]Navigate To Select \n[2]Manually Enter a directory path\nChoose a directory to save the keystore:"
+  );
 
   if (initialChoice === "2") {
     while (true) {
-      const manualPath = await input({
-        message: "Please enter the directory path: ",
-        validate: (input) => {
-          if (validatePath(input)) {
-            return true;
-          }
-          return "Invalid directory path. Please try again.";
-        },
-      });
-      saveSelectedPath(manualPath);
-      return manualPath;
+      const manualPath = readlineSync.question(
+        "Please enter the directory path: "
+      );
+      if (validatePath(manualPath)) {
+        saveSelectedPath(manualPath);
+        return manualPath;
+      } else {
+        console.log("Invalid directory path. Please try again.");
+      }
     }
   } else if (initialChoice === "1") {
     let currentPath = ".";
@@ -91,13 +88,19 @@ export const selectDirPrompt = async () => {
     while (!finalSelection) {
       const directories = await listDirectories(currentPath);
 
-      const index = await select({
-        message: `\nCurrent directory: ${currentPath}\nSelect a directory:`,
-        choices: directories.map((dir, idx) => ({
-          name: dir,
-          value: idx,
-        })),
+      console.log(`\nCurrent directory: ${currentPath}`);
+      directories.forEach((dir, index) => {
+        console.log(`[${index}] ${dir}`);
       });
+
+      const index = readlineSync.questionInt(
+        `Select a directory (0-${directories.length - 1}): `
+      );
+
+      if (index < 0 || index >= directories.length) {
+        console.log("Invalid selection. Please try again.");
+        continue;
+      }
 
       const directory = directories[index];
 
@@ -109,9 +112,9 @@ export const selectDirPrompt = async () => {
         currentPath = path.resolve(currentPath, directory);
       }
 
-      const finalize = await confirm({
-        message: "Do you want to finalize this directory selection? (Y/N): ",
-      });
+      const finalize = readlineSync.keyInYNStrict(
+        "Do you want to finalize this directory selection? (Y/N): "
+      );
 
       if (finalize) {
         finalSelection = true;
@@ -122,17 +125,20 @@ export const selectDirPrompt = async () => {
     saveSelectedPath(selectedPath);
     return selectedPath;
   } else {
-    console.log('Invalid choice. Please restart and enter "1" or "2".');
+    console.log(
+      'Invalid choice. Please restart and enter "1" or "2".'
+    );
     process.exit(1);
   }
 };
 
+
 export const cmdGreenFont = (msg: string) => {
   return `\x1b[32m${msg}\x1b[0m`;
-};
+}
 export const cmdRedFont = (msg: string) => {
   return `\x1b[31m${msg}\x1b[0m`;
-};
+}
 export const cmdYellowFont = (msg: string) => {
   return `\x1b[33m${msg}\x1b[0m`;
-};
+}

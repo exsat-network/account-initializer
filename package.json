@@ -6,15 +6,18 @@
   "bin": "dist/index.js",
   "scripts": {
     "start": "ts-node src/start.ts",
+    "test": "ts-node test/start.ts",
     "test-server": "ts-node mock-server/server.ts",
     "build": "tsc",
     "dev": "nodemon --exec ts-node src/index.ts",
     "pkg": "npm run build && pkg . --compress Brotli"
   },
   "dependencies": {
+    "@inquirer/prompts": "^5.1.2",
     "@scure/bip39": "^1.0.0",
     "@types/crypto-js": "^4.2.2",
     "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.7@^8.0.0",
     "@types/json-server": "^0.14.7",
     "@types/randombytes": "^2.0.3",
     "@types/scrypt-js": "^3.0.1",
@@ -66,4 +69,3 @@
   "author": "Purson",
   "license": "MIT"
 }
-

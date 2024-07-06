@@ -1,8 +1,8 @@
+import readlineSync from "readline-sync";
 import { axiosInstance, readSelectedPath, retryRequest } from "./utils";
-import { MIN_BTC_AMOUNT } from "./constants";
+import { MIN_BTC_AMOUNT } from "../constants";
 import qrcode from "qrcode-terminal";
 import { readFileSync, readdirSync } from "fs";
-import { input, confirm } from '@inquirer/prompts';
 
 export const chargeBtcForResource = async () => {
   try {
@@ -12,22 +12,18 @@ export const chargeBtcForResource = async () => {
 
     if (selectedPath) {
       const files = readdirSync(selectedPath).filter((file) =>
-          file.endsWith("_keystore.json")
+        file.endsWith("_keystore.json")
       );
 
       if (files.length > 0) {
         encFile = files[0];
       } else {
-        const filePath = await input({
-          message: "Enter the path to your keystore file: ",
-        });
-        encFile = filePath;
+        encFile = readlineSync.question(
+          "Enter the path to your keystore file: "
+        );
       }
     } else {
-      const filePath = await input({
-        message: "Enter the path to your keystore file: ",
-      });
-      encFile = filePath;
+      encFile = readlineSync.question("Enter the path to your keystore file: ");
     }
 
     const keystore = readFileSync(encFile, "utf-8");
@@ -35,7 +31,7 @@ export const chargeBtcForResource = async () => {
     let username = "";
 
     const account = await retryRequest(() =>
-        axiosInstance.post("/api/users/my", { publicKey: keystoreInfo.address })
+      axiosInstance.post("/api/users/my", { publicKey: keystoreInfo.address })
     );
 
     const accountInfo = account.data;
@@ -46,27 +42,33 @@ export const chargeBtcForResource = async () => {
       username = accountInfo.info.username;
     } else {
       console.log(
-          `Account not found for publicKey: ${keystoreInfo.address}`
+        `Account not found for for publicKey: ${keystoreInfo.address}`
       );
       return;
     }
 
-    const amountInput = await input({
-      message: `Enter the amount of BTC to charge (more than ${MIN_BTC_AMOUNT} BTC): `,
-      validate: (input) => {
-        const amount = parseFloat(input);
-        if (isNaN(amount) || amount < MIN_BTC_AMOUNT) {
-          return `Amount must be more than ${MIN_BTC_AMOUNT} BTC. Please try again.`;
-        }
-        return true;
-      },
-    });
+    let amountInput = parseFloat(
+      readlineSync.question(
+        "Enter the amount of BTC to charge (more than 0.01 BTC): "
+      )
+    );
 
-    const response = await retryRequest(() =>
-        axiosInstance.post("/api/payments/create-payment", {
-          username,
-          amount: parseFloat(amountInput),
-        })
+    while (isNaN(amountInput) || amountInput < MIN_BTC_AMOUNT) {
+      console.log(
+        `Amount must be more than ${MIN_BTC_AMOUNT} BTC. Please try again.`
+      );
+      amountInput = parseFloat(
+        readlineSync.question(
+          "Enter the amount of BTC to charge (more than 0.01 BTC): "
+        )
+      );
+    }
+
+    const response: any = await retryRequest(() =>
+      axiosInstance.post("/api/payments/create-payment", {
+        username,
+        amount: amountInput,
+      })
     );
 
     if (response.data.status != "success") {
@@ -80,15 +82,15 @@ export const chargeBtcForResource = async () => {
     qrcode.generate(btcAddress, { small: true });
     console.log(btcAddress);
 
-    const txid = await input({
-      message: "Enter the transaction ID after sending BTC: ",
-    });
+    const txid = readlineSync.question(
+      "Enter the transaction ID after sending BTC: "
+    );
 
     const response2 = await retryRequest(() =>
-        axiosInstance.post("/api/payments/submit-payment", {
-          txid,
-          username,
-        })
+      axiosInstance.post("/api/payments/submit-payment", {
+        txid,
+        username,
+      })
     );
 
     if (response2.data.status === "success") {
