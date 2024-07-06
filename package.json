@@ -17,7 +17,6 @@
     "@scure/bip39": "^1.0.0",
     "@types/crypto-js": "^4.2.2",
     "@types/fs-extra": "^11.0.4",
-    "@types/inquirer": "^9.0.7@^8.0.0",
     "@types/json-server": "^0.14.7",
     "@types/randombytes": "^2.0.3",
     "@types/scrypt-js": "^3.0.1",
