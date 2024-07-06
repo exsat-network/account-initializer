@@ -4,7 +4,7 @@ export declare const deleteTempFile: () => void;
 export declare const axiosInstance: import("axios").AxiosInstance;
 export declare const retryRequest: (fn: () => Promise<any>, retries?: number) => Promise<any>;
 export declare const listDirectories: (currentPath: string) => Promise<string[]>;
-export declare const selectDirPrompt: () => Promise<any>;
+export declare const selectDirPrompt: () => Promise<string>;
 export declare const cmdGreenFont: (msg: string) => string;
 export declare const cmdRedFont: (msg: string) => string;
 export declare const cmdYellowFont: (msg: string) => string;

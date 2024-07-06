@@ -1,1 +1,1 @@
-export declare const showMenu: () => void;
+export declare const showMenu: () => Promise<void>;

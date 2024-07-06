@@ -8,15 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.queryAccount = void 0;
-const readline_sync_1 = __importDefault(require("readline-sync"));
 const utils_1 = require("./utils");
 const fs_1 = require("fs");
 const web3_1 = require("./web3");
+const prompts_1 = require("@inquirer/prompts");
 const queryAccount = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let encFile = "";
@@ -27,11 +24,17 @@ const queryAccount = () => __awaiter(void 0, void 0, void 0, function* () {
                 encFile = files[0];
             }
             else {
-                encFile = readline_sync_1.default.question("Enter the path to your keystore file: ");
+                const filePath = yield (0, prompts_1.input)({
+                    message: "Enter the path to your keystore file: ",
+                });
+                encFile = filePath;
             }
         }
         else {
-            encFile = readline_sync_1.default.question("Enter the path to your keystore file: ");
+            const filePath = yield (0, prompts_1.input)({
+                message: "Enter the path to your keystore file: ",
+            });
+            encFile = filePath;
         }
         const keystore = (0, fs_1.readFileSync)(encFile, "utf-8");
         const keystoreInfo = JSON.parse(keystore);
@@ -45,15 +48,18 @@ const queryAccount = () => __awaiter(void 0, void 0, void 0, function* () {
             console.log(`Status: ${accountInfo.info.status}`);
         }
         else {
-            console.log(`Account not found for for publicKey: ${keystoreInfo.address}`);
+            console.log(`Account not found for publicKey: ${keystoreInfo.address}`);
             return;
         }
-        const needPrivateKey = readline_sync_1.default.keyInYN("\nDo you need to access the private key? ");
+        const needPrivateKey = yield (0, prompts_1.confirm)({
+            message: "\nDo you need to access the private key?",
+        });
         if (needPrivateKey) {
-            const password = readline_sync_1.default.question("Enter the password to decrypt your private key: ", {
-                hideEchoBack: true,
+            const passwordInput = yield (0, prompts_1.password)({
+                message: "Enter the password to decrypt your private key: ",
+                mask: '*',
             });
-            const data = yield (0, web3_1.decryptKeystore)(keystore, password);
+            const data = yield (0, web3_1.decryptKeystore)(keystore, passwordInput);
             console.log(`\nPrivate Key: ${(0, utils_1.cmdGreenFont)(data)}`);
         }
     }

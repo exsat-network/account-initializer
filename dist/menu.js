@@ -1,36 +1,47 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.showMenu = void 0;
-const readline_sync_1 = __importDefault(require("readline-sync"));
 const accountInitializer_1 = require("./accountInitializer");
 const query_1 = require("./query");
 const btcResource_1 = require("./btcResource"); // Import the new function
-const showMenu = () => {
-    console.log("1. Initialize Account");
-    console.log("2. Query Account");
-    console.log("3. Charging BTC for Resource"); // New menu item
-    console.log("4. Exit");
-    const choice = readline_sync_1.default.question("Enter your choice: ");
+const prompts_1 = require("@inquirer/prompts");
+const showMenu = () => __awaiter(void 0, void 0, void 0, function* () {
+    const choices = [
+        { name: "Initialize Account", value: "1" },
+        { name: "Query Account", value: "2" },
+        { name: "Charging BTC for Resource", value: "3" },
+        { name: "Exit", value: "4" },
+    ];
+    const choice = yield (0, prompts_1.select)({
+        message: "Select an option:",
+        choices: choices.map(choice => ({ name: choice.name, value: choice.value })),
+    });
     switch (choice) {
         case "1":
-            (0, accountInitializer_1.initializeAccount)();
+            yield (0, accountInitializer_1.initializeAccount)();
             break;
         case "2":
-            (0, query_1.queryAccount)();
+            yield (0, query_1.queryAccount)();
             break;
         case "3":
-            (0, btcResource_1.chargeBtcForResource)(); // Call the new function
+            yield (0, btcResource_1.chargeBtcForResource)(); // Call the new function
             break;
         case "4":
             console.log("Exiting...");
             process.exit(0);
         default:
             console.log("Invalid choice. Please try again.");
-            (0, exports.showMenu)();
+            yield (0, exports.showMenu)();
             break;
     }
-};
+});
 exports.showMenu = showMenu;

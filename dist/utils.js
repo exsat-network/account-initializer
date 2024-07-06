@@ -17,7 +17,7 @@ const axios_1 = __importDefault(require("axios"));
 const constants_1 = require("./constants");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
-const readline_sync_1 = __importDefault(require("readline-sync"));
+const prompts_1 = require("@inquirer/prompts");
 const tempFilePath = path_1.default.join(__dirname, "keystore_path.tmp");
 const saveSelectedPath = (selectedPath) => {
     fs_extra_1.default.writeFileSync(tempFilePath, selectedPath);
@@ -69,17 +69,26 @@ const validatePath = (inputPath) => {
     return fs_extra_1.default.existsSync(inputPath) && fs_extra_1.default.statSync(inputPath).isDirectory();
 };
 const selectDirPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
-    const initialChoice = readline_sync_1.default.question("\n[1]Navigate To Select \n[2]Manually Enter a directory path\nChoose a directory to save the keystore:");
+    const initialChoice = yield (0, prompts_1.select)({
+        message: "\nChoose a directory to save the keystore:",
+        choices: [
+            { name: "Navigate To Select", value: "1" },
+            { name: "Manually Enter a directory path", value: "2" },
+        ],
+    });
     if (initialChoice === "2") {
         while (true) {
-            const manualPath = readline_sync_1.default.question("Please enter the directory path: ");
-            if (validatePath(manualPath)) {
-                (0, exports.saveSelectedPath)(manualPath);
-                return manualPath;
-            }
-            else {
-                console.log("Invalid directory path. Please try again.");
-            }
+            const manualPath = yield (0, prompts_1.input)({
+                message: "Please enter the directory path: ",
+                validate: (input) => {
+                    if (validatePath(input)) {
+                        return true;
+                    }
+                    return "Invalid directory path. Please try again.";
+                },
+            });
+            (0, exports.saveSelectedPath)(manualPath);
+            return manualPath;
         }
     }
     else if (initialChoice === "1") {
@@ -88,15 +97,13 @@ const selectDirPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
         let finalSelection = false;
         while (!finalSelection) {
             const directories = yield (0, exports.listDirectories)(currentPath);
-            console.log(`\nCurrent directory: ${currentPath}`);
-            directories.forEach((dir, index) => {
-                console.log(`[${index}] ${dir}`);
+            const index = yield (0, prompts_1.select)({
+                message: `\nCurrent directory: ${currentPath}\nSelect a directory:`,
+                choices: directories.map((dir, idx) => ({
+                    name: dir,
+                    value: idx,
+                })),
             });
-            const index = readline_sync_1.default.questionInt(`Select a directory (0-${directories.length - 1}): `);
-            if (index < 0 || index >= directories.length) {
-                console.log("Invalid selection. Please try again.");
-                continue;
-            }
             const directory = directories[index];
             if (directory === "..") {
                 currentPath = path_1.default.resolve(currentPath, "..");
@@ -107,7 +114,9 @@ const selectDirPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
             else {
                 currentPath = path_1.default.resolve(currentPath, directory);
             }
-            const finalize = readline_sync_1.default.keyInYNStrict("Do you want to finalize this directory selection? (Y/N): ");
+            const finalize = yield (0, prompts_1.confirm)({
+                message: "Do you want to finalize this directory selection? (Y/N): ",
+            });
             if (finalize) {
                 finalSelection = true;
                 selectedPath = currentPath;
