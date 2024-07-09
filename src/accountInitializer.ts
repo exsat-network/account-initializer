@@ -87,6 +87,114 @@ const checkUsernameRegisterOrder = async (
         return false;
     }
 };
+async function saveKeystore(privateKey:PrivateKey, username:string){
+    const passwordInput = await password({
+        message: "Enter a password to encrypt your private key(>= 6 digits): ",
+        mask: '*',
+        validate: (input) => input.length >= 6 || "Password must be at least 6 characters long."
+    });
+
+    const keystore = await createKeystore(
+        `${bytesToHex(privateKey.toString())}`,
+        passwordInput,
+        username
+    );
+    console.log(`\nKeystore created successfully.\n`);
+    // console.log(keystore);
+
+    // const decryptedPrivateKey = await decryptKeystore(keystore, passwordInput);
+    // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
+
+    const selectedPath = await selectDirPrompt();
+
+    writeFileSync(
+        `${selectedPath}/${username}_keystore.json`,
+        JSON.stringify(keystore)
+    );
+
+    console.log(`\n${cmdRedFont("!!!Remember to backup this file!!!")}\n`);
+    console.log(
+        `\n${cmdGreenFont(
+            `Saved Successed: ${selectedPath}/${username}_keystore.json`
+        )}\n`
+    );
+}
+
+ async function generateKeystore(username){
+    const mnemonic = generateMnemonic(wordlist);
+    console.log(`Your mnemonic phrase: \n`);
+    console.log(`${cmdGreenFont(mnemonic)}\n`);
+    await input({
+        message: "Press [Enter] button after you have saved your mnemonic phrase.",
+    });
+
+    const seed = mnemonicToSeedSync(mnemonic);
+    const master = HDKey.fromMasterSeed(Buffer.from(seed));
+    const node = master.derive("m/44'/194'/0'/0/0");
+
+    const privateKey = PrivateKey.from(
+        WIF.encode(128, node.privateKey, false).toString()
+    );
+
+    const publicKey = privateKey.toPublic().toString();
+
+    console.log(`\nPrivate Key: ${cmdGreenFont(privateKey.toString())}`);
+    console.log(`Public Key: ${cmdGreenFont(publicKey)}\n`);
+    console.log("Key pair generation successful.\n");
+
+    await saveKeystore(privateKey, username);
+
+    return {privateKey, publicKey,username};
+}
+async function getAccountName(privateKey: PrivateKey){
+     const apiUrl='https://eos.greymass.com'
+
+    try {
+        const response = await axiosInstance.post(`${apiUrl}/v1/history/get_key_accounts`, {
+            public_key: privateKey.toPublic().toString(),
+        });
+
+        return response.data.account_names;
+        } catch (error) {
+        throw new Error('Error Accounts');
+    }
+}
+export const importFromMnemonic = async ()=> {
+    await retryRequest(async ()=>{
+        const mnemonic = await input({
+            message: "Enter your mnemonic phrase (12 words):"})
+
+        const seed = mnemonicToSeedSync(mnemonic.trim());
+        const master = HDKey.fromMasterSeed(Buffer.from(seed));
+        const node = master.derive("m/44'/194'/0'/0/0");
+
+        const privateKey = PrivateKey.from(
+            WIF.encode(128, node.privateKey, false).toString()
+        );
+
+        const publicKey = privateKey.toPublic().toString();
+
+        console.log(`\nPrivate Key: ${cmdGreenFont(privateKey.toString())}`);
+        console.log(`Public Key: ${cmdGreenFont(publicKey)}\n`);
+        console.log("Key pair generation successful.\n");
+        const username = await getAccountName(privateKey);
+        await saveKeystore(privateKey, username);
+    },3);
+
+}
+export const importFromPrivateKey =async () => {
+    await retryRequest(async ()=>{
+        const privateKeyInput = await input({
+            message: "Enter your private key (64 characters):"
+        })
+        const privateKey = PrivateKey.from(
+            privateKeyInput
+        );
+        const username = await getAccountName(privateKey);
+        await saveKeystore(privateKey, username);
+    },3)
+
+}
 
 export const initializeAccount = async () => {
     const savedPath = readSelectedPath();
@@ -217,57 +325,7 @@ export const initializeAccount = async () => {
         choices: roleOptions,
     });
 
-    const mnemonic = generateMnemonic(wordlist);
-    console.log(`Your mnemonic phrase: \n`);
-    console.log(`${cmdGreenFont(mnemonic)}\n`);
-    await input({
-        message: "Press [Enter] button after you have saved your mnemonic phrase.",
-    });
-
-    const seed = mnemonicToSeedSync(mnemonic);
-    const master = HDKey.fromMasterSeed(Buffer.from(seed));
-    const node = master.derive("m/44'/194'/0'/0/0");
-
-    const privateKey = PrivateKey.from(
-        WIF.encode(128, node.privateKey, false).toString()
-    );
-
-    const publicKey = privateKey.toPublic().toString();
-
-    console.log(`\nPrivate Key: ${cmdGreenFont(privateKey.toString())}`);
-    console.log(`Public Key: ${cmdGreenFont(publicKey)}\n`);
-    console.log("Key pair generation successful.\n");
-
-    const passwordInput = await password({
-        message: "Enter a password to encrypt your private key(>= 6 digits): ",
-        mask: '*',
-        validate: (input) => input.length >= 6 || "Password must be at least 6 characters long."
-    });
-
-    const keystore = await createKeystore(
-        `${bytesToHex(node.privateKey)}`,
-        passwordInput,
-        username
-    );
-    console.log(`\nKeystore created successfully.\n`);
-    // console.log(keystore);
-
-    // const decryptedPrivateKey = await decryptKeystore(keystore, passwordInput);
-    // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
-
-    const selectedPath = await selectDirPrompt();
-
-    writeFileSync(
-        `${selectedPath}/${username}_keystore.json`,
-        JSON.stringify(keystore)
-    );
-
-    console.log(`\n${cmdRedFont("!!!Remember to backup this file!!!")}\n`);
-    console.log(
-        `\n${cmdGreenFont(
-            `Saved Successed: ${selectedPath}/${username}_keystore.json`
-        )}\n`
-    );
+    const {publicKey} = await generateKeystore(username);
 
     try {
         const response = await retryRequest(() =>

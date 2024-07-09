@@ -1,4 +1,4 @@
-import { initializeAccount } from "./accountInitializer";
+import {importFromMnemonic, importFromPrivateKey, initializeAccount} from "./accountInitializer";
 import { queryAccount } from "./query";
 import { chargeBtcForResource } from "./btcResource"; // Import the new function
 import { select } from '@inquirer/prompts';
@@ -8,7 +8,9 @@ export const showMenu = async () => {
     { name: "Initialize Account", value: "1" },
     { name: "Query Account", value: "2" },
     { name: "Charging BTC for Resource", value: "3" }, // New menu item
-    { name: "Exit", value: "4" },
+    { name:"Generate Keystore From Mnemonic", value: "4" },
+    { name:"Generate Keystore From PrivateKey", value: "5" },
+    { name: "Exit", value: "99" },
   ];
 
   const choice = await select({
@@ -26,7 +28,13 @@ export const showMenu = async () => {
     case "3":
       await chargeBtcForResource(); // Call the new function
       break;
-    case "4":
+      case "4":
+        await importFromMnemonic();
+        break;
+      case "5":
+        await importFromPrivateKey();
+        break;
+    case "99":
       console.log("Exiting...");
       process.exit(0);
     default:

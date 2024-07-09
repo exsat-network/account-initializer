@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { showMenu } from "./menu";
 
-const main = () => {
+const main = async () => {
   console.log("Welcome to exSat Account Manager");
-  showMenu();
+  await showMenu();
 };
 
-main();
+main().then(() =>{} );
