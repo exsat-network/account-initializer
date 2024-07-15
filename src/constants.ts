@@ -5,7 +5,7 @@ dotenv.config();
 export const MIN_BTC_AMOUNT = 0.01;
 export const API_URL = process.env.ACCOUNT_INITIALIZER_API_BASE_URL || "";
 export const API_SECRET = process.env.ACCOUNT_INITIALIZER_API_SECRET || "";
-export const EOS_RPC_URL = process.env.EOS_RPC_URL || "";
+export const EOS_RPC_URL = JSON.parse(process.env.EOS_RPC_URL||'') || [];
 
 export type HexString = string;
 export type Cipher = "aes-128-ctr" | "aes-128-cbc" | "aes-256-cbc";

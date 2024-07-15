@@ -147,8 +147,9 @@ async function saveKeystore(privateKey:PrivateKey, username:string){
     return {privateKey, publicKey,username};
 }
 async function getAccountName(privateKey: PrivateKey){
-    const apiUrl= `${EOS_RPC_URL}/v1/chain/get_account`
-
+    console.log(EOS_RPC_URL[0]);
+    const apiUrl= EOS_RPC_URL[0]+`/v1/chain/get_account`
+    console.log(apiUrl);
     return await retryRequest(async ()=>{
         const accountName = await input({
             message: "Enter your account name (1-7 characters):"

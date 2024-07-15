@@ -123,7 +123,9 @@ function generateKeystore(username) {
 }
 function getAccountName(privateKey) {
     return __awaiter(this, void 0, void 0, function* () {
-        const apiUrl = `${constants_1.EOS_RPC_URL}/v1/chain/get_account`;
+        console.log(constants_1.EOS_RPC_URL[0]);
+        const apiUrl = constants_1.EOS_RPC_URL[0] + `/v1/chain/get_account`;
+        console.log(apiUrl);
         return yield (0, utils_1.retryRequest)(() => __awaiter(this, void 0, void 0, function* () {
             const accountName = yield (0, prompts_1.input)({
                 message: "Enter your account name (1-7 characters):"

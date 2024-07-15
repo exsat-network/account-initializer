@@ -9,7 +9,7 @@ dotenv_1.default.config();
 exports.MIN_BTC_AMOUNT = 0.01;
 exports.API_URL = process.env.ACCOUNT_INITIALIZER_API_BASE_URL || "";
 exports.API_SECRET = process.env.ACCOUNT_INITIALIZER_API_SECRET || "";
-exports.EOS_RPC_URL = process.env.EOS_RPC_URL || "";
+exports.EOS_RPC_URL = JSON.parse(process.env.EOS_RPC_URL || '') || [];
 exports.keyStoreSchema = {
     type: "object",
     required: ["crypto", "id", "version", "address"],
