@@ -1,7 +1,7 @@
 import { generateMnemonic, mnemonicToSeedSync } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english";
 import HDKey from "hdkey";
-import { PrivateKey } from "@wharfkit/antelope";
+import {PrivateKey, PublicKey} from "@wharfkit/antelope";
 import { writeFileSync, readdirSync, readFileSync } from "fs";
 import qrcode from "qrcode-terminal";
 import {
@@ -14,8 +14,8 @@ import {
 } from "./utils";
 import { createKeystore, decryptKeystore } from "./web3";
 import WIF from "wif";
-import { bytesToHex } from "web3-utils";
-import { UserInfo } from "./constants";
+import {bytesToHex, stringToHex} from "web3-utils";
+import {EOS_RPC_URL, UserInfo} from "./constants";
 import { input, select, confirm, password } from '@inquirer/prompts';
 
 const validateUrl = (value: string): boolean => {
@@ -95,7 +95,7 @@ async function saveKeystore(privateKey:PrivateKey, username:string){
     });
 
     const keystore = await createKeystore(
-        `${bytesToHex(privateKey.toString())}`,
+        `${bytesToHex(WIF.decode(privateKey.toWif(),128).privateKey)}`,
         passwordInput,
         username
     );
@@ -135,10 +135,10 @@ async function saveKeystore(privateKey:PrivateKey, username:string){
     const privateKey = PrivateKey.from(
         WIF.encode(128, node.privateKey, false).toString()
     );
-
     const publicKey = privateKey.toPublic().toString();
 
     console.log(`\nPrivate Key: ${cmdGreenFont(privateKey.toString())}`);
+
     console.log(`Public Key: ${cmdGreenFont(publicKey)}\n`);
     console.log("Key pair generation successful.\n");
 
@@ -147,20 +147,25 @@ async function saveKeystore(privateKey:PrivateKey, username:string){
     return {privateKey, publicKey,username};
 }
 async function getAccountName(privateKey: PrivateKey){
-     const apiUrl='https://eos.greymass.com'
+    const apiUrl= `${EOS_RPC_URL}/v1/chain/get_account`
 
-    try {
-        const response = await axiosInstance.post(`${apiUrl}/v1/history/get_key_accounts`, {
-            public_key: privateKey.toPublic().toString(),
+    return await retryRequest(async ()=>{
+        const accountName = await input({
+            message: "Enter your account name (1-7 characters):"
+        })
+        const fullAccountName = accountName.endsWith('.xsat')?accountName:`${accountName}.xsat`
+        const response = await axiosInstance.post(apiUrl, {
+            account_name: fullAccountName,
         });
 
-        return response.data.account_names;
-        } catch (error) {
-        throw new Error('Error Accounts');
-    }
+        const publicKey = response.data.permissions[0].required_auth.keys[0].key;
+        if(privateKey.toPublic().toLegacyString() === publicKey){
+            return accountName;
+        }
+        throw new Error("Account name is not matched.");
+    },3);
 }
 export const importFromMnemonic = async ()=> {
-    await retryRequest(async ()=>{
         const mnemonic = await input({
             message: "Enter your mnemonic phrase (12 words):"})
 
@@ -176,10 +181,10 @@ export const importFromMnemonic = async ()=> {
 
         console.log(`\nPrivate Key: ${cmdGreenFont(privateKey.toString())}`);
         console.log(`Public Key: ${cmdGreenFont(publicKey)}\n`);
+        console.log(`Public Key: ${cmdGreenFont(PublicKey.from(publicKey).toLegacyString())}\n`);
         console.log("Key pair generation successful.\n");
         const username = await getAccountName(privateKey);
         await saveKeystore(privateKey, username);
-    },3);
 
 }
 export const importFromPrivateKey =async () => {
