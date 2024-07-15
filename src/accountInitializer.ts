@@ -181,7 +181,6 @@ export const importFromMnemonic = async ()=> {
 
         console.log(`\nPrivate Key: ${cmdGreenFont(privateKey.toString())}`);
         console.log(`Public Key: ${cmdGreenFont(publicKey)}\n`);
-        console.log(`Public Key: ${cmdGreenFont(PublicKey.from(publicKey).toLegacyString())}\n`);
         console.log("Key pair generation successful.\n");
         const username = await getAccountName(privateKey);
         await saveKeystore(privateKey, username);
