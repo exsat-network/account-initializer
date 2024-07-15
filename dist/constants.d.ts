@@ -1,7 +1,7 @@
 export declare const MIN_BTC_AMOUNT = 0.01;
 export declare const API_URL: string;
 export declare const API_SECRET: string;
-export declare const EOS_RPC_URL: any;
+export declare const EOS_RPC_URLS: any;
 export type HexString = string;
 export type Cipher = "aes-128-ctr" | "aes-128-cbc" | "aes-256-cbc";
 export type CipherOptions = {
