@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeAccount = void 0;
+exports.initializeAccount = exports.importFromPrivateKey = exports.importFromMnemonic = void 0;
 const bip39_1 = require("@scure/bip39");
 const english_1 = require("@scure/bip39/wordlists/english");
 const hdkey_1 = __importDefault(require("hdkey"));
@@ -23,6 +23,7 @@ const utils_1 = require("./utils");
 const web3_1 = require("./web3");
 const wif_1 = __importDefault(require("wif"));
 const web3_utils_1 = require("web3-utils");
+const constants_1 = require("./constants");
 const prompts_1 = require("@inquirer/prompts");
 const validateUrl = (value) => {
     try {
@@ -82,6 +83,90 @@ const checkUsernameRegisterOrder = (username) => __awaiter(void 0, void 0, void 
         return false;
     }
 });
+function saveKeystore(privateKey, username) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const passwordInput = yield (0, prompts_1.password)({
+            message: "Enter a password to encrypt your private key(>= 6 digits): ",
+            mask: '*',
+            validate: (input) => input.length >= 6 || "Password must be at least 6 characters long."
+        });
+        const keystore = yield (0, web3_1.createKeystore)(`${(0, web3_utils_1.bytesToHex)(wif_1.default.decode(privateKey.toWif(), 128).privateKey)}`, passwordInput, username);
+        console.log(`\nKeystore created successfully.\n`);
+        // console.log(keystore);
+        // const decryptedPrivateKey = await decryptKeystore(keystore, passwordInput);
+        // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
+        const selectedPath = yield (0, utils_1.selectDirPrompt)();
+        (0, fs_1.writeFileSync)(`${selectedPath}/${username}_keystore.json`, JSON.stringify(keystore));
+        console.log(`\n${(0, utils_1.cmdRedFont)("!!!Remember to backup this file!!!")}\n`);
+        console.log(`\n${(0, utils_1.cmdGreenFont)(`Saved Successed: ${selectedPath}/${username}_keystore.json`)}\n`);
+    });
+}
+function generateKeystore(username) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const mnemonic = (0, bip39_1.generateMnemonic)(english_1.wordlist);
+        console.log(`Your mnemonic phrase: \n`);
+        console.log(`${(0, utils_1.cmdGreenFont)(mnemonic)}\n`);
+        yield (0, prompts_1.input)({
+            message: "Press [Enter] button after you have saved your mnemonic phrase.",
+        });
+        const seed = (0, bip39_1.mnemonicToSeedSync)(mnemonic);
+        const master = hdkey_1.default.fromMasterSeed(Buffer.from(seed));
+        const node = master.derive("m/44'/194'/0'/0/0");
+        const privateKey = antelope_1.PrivateKey.from(wif_1.default.encode(128, node.privateKey, false).toString());
+        const publicKey = privateKey.toPublic().toString();
+        console.log(`\nPrivate Key: ${(0, utils_1.cmdGreenFont)(privateKey.toString())}`);
+        console.log(`Public Key: ${(0, utils_1.cmdGreenFont)(publicKey)}\n`);
+        console.log("Key pair generation successful.\n");
+        yield saveKeystore(privateKey, username);
+        return { privateKey, publicKey, username };
+    });
+}
+function getAccountName(privateKey) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const apiUrl = `${constants_1.EOS_RPC_URL}/v1/chain/get_account`;
+        return yield (0, utils_1.retryRequest)(() => __awaiter(this, void 0, void 0, function* () {
+            const accountName = yield (0, prompts_1.input)({
+                message: "Enter your account name (1-7 characters):"
+            });
+            const fullAccountName = accountName.endsWith('.xsat') ? accountName : `${accountName}.xsat`;
+            const response = yield utils_1.axiosInstance.post(apiUrl, {
+                account_name: fullAccountName,
+            });
+            const publicKey = response.data.permissions[0].required_auth.keys[0].key;
+            if (privateKey.toPublic().toLegacyString() === publicKey) {
+                return accountName;
+            }
+            throw new Error("Account name is not matched.");
+        }), 3);
+    });
+}
+const importFromMnemonic = () => __awaiter(void 0, void 0, void 0, function* () {
+    const mnemonic = yield (0, prompts_1.input)({
+        message: "Enter your mnemonic phrase (12 words):"
+    });
+    const seed = (0, bip39_1.mnemonicToSeedSync)(mnemonic.trim());
+    const master = hdkey_1.default.fromMasterSeed(Buffer.from(seed));
+    const node = master.derive("m/44'/194'/0'/0/0");
+    const privateKey = antelope_1.PrivateKey.from(wif_1.default.encode(128, node.privateKey, false).toString());
+    const publicKey = privateKey.toPublic().toString();
+    console.log(`\nPrivate Key: ${(0, utils_1.cmdGreenFont)(privateKey.toString())}`);
+    console.log(`Public Key: ${(0, utils_1.cmdGreenFont)(publicKey)}\n`);
+    console.log("Key pair generation successful.\n");
+    const username = yield getAccountName(privateKey);
+    yield saveKeystore(privateKey, username);
+});
+exports.importFromMnemonic = importFromMnemonic;
+const importFromPrivateKey = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, utils_1.retryRequest)(() => __awaiter(void 0, void 0, void 0, function* () {
+        const privateKeyInput = yield (0, prompts_1.input)({
+            message: "Enter your private key (64 characters):"
+        });
+        const privateKey = antelope_1.PrivateKey.from(privateKeyInput);
+        const username = yield getAccountName(privateKey);
+        yield saveKeystore(privateKey, username);
+    }), 3);
+});
+exports.importFromPrivateKey = importFromPrivateKey;
 const initializeAccount = () => __awaiter(void 0, void 0, void 0, function* () {
     const savedPath = (0, utils_1.readSelectedPath)();
     if (savedPath &&
@@ -186,34 +271,7 @@ const initializeAccount = () => __awaiter(void 0, void 0, void 0, function* () {
         message: "Select a role:",
         choices: roleOptions,
     });
-    const mnemonic = (0, bip39_1.generateMnemonic)(english_1.wordlist);
-    console.log(`Your mnemonic phrase: \n`);
-    console.log(`${(0, utils_1.cmdGreenFont)(mnemonic)}\n`);
-    yield (0, prompts_1.input)({
-        message: "Press [Enter] button after you have saved your mnemonic phrase.",
-    });
-    const seed = (0, bip39_1.mnemonicToSeedSync)(mnemonic);
-    const master = hdkey_1.default.fromMasterSeed(Buffer.from(seed));
-    const node = master.derive("m/44'/194'/0'/0/0");
-    const privateKey = antelope_1.PrivateKey.from(wif_1.default.encode(128, node.privateKey, false).toString());
-    const publicKey = privateKey.toPublic().toString();
-    console.log(`\nPrivate Key: ${(0, utils_1.cmdGreenFont)(privateKey.toString())}`);
-    console.log(`Public Key: ${(0, utils_1.cmdGreenFont)(publicKey)}\n`);
-    console.log("Key pair generation successful.\n");
-    const passwordInput = yield (0, prompts_1.password)({
-        message: "Enter a password to encrypt your private key(>= 6 digits): ",
-        mask: '*',
-        validate: (input) => input.length >= 6 || "Password must be at least 6 characters long."
-    });
-    const keystore = yield (0, web3_1.createKeystore)(`${(0, web3_utils_1.bytesToHex)(node.privateKey)}`, passwordInput, username);
-    console.log(`\nKeystore created successfully.\n`);
-    // console.log(keystore);
-    // const decryptedPrivateKey = await decryptKeystore(keystore, passwordInput);
-    // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
-    const selectedPath = yield (0, utils_1.selectDirPrompt)();
-    (0, fs_1.writeFileSync)(`${selectedPath}/${username}_keystore.json`, JSON.stringify(keystore));
-    console.log(`\n${(0, utils_1.cmdRedFont)("!!!Remember to backup this file!!!")}\n`);
-    console.log(`\n${(0, utils_1.cmdGreenFont)(`Saved Successed: ${selectedPath}/${username}_keystore.json`)}\n`);
+    const { publicKey } = yield generateKeystore(username);
     try {
         const response = yield (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post("/api/users/create-user", {
             username,

@@ -19,7 +19,9 @@ const showMenu = () => __awaiter(void 0, void 0, void 0, function* () {
         { name: "Initialize Account", value: "1" },
         { name: "Query Account", value: "2" },
         { name: "Charging BTC for Resource", value: "3" },
-        { name: "Exit", value: "4" },
+        { name: "Generate Keystore From Mnemonic", value: "4" },
+        { name: "Generate Keystore From PrivateKey", value: "5" },
+        { name: "Exit", value: "99" },
     ];
     const choice = yield (0, prompts_1.select)({
         message: "Select an option:",
@@ -36,6 +38,12 @@ const showMenu = () => __awaiter(void 0, void 0, void 0, function* () {
             yield (0, btcResource_1.chargeBtcForResource)(); // Call the new function
             break;
         case "4":
+            yield (0, accountInitializer_1.importFromMnemonic)();
+            break;
+        case "5":
+            yield (0, accountInitializer_1.importFromPrivateKey)();
+            break;
+        case "99":
             console.log("Exiting...");
             process.exit(0);
         default:

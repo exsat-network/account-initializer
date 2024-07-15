@@ -3,12 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.keyStoreSchema = exports.API_SECRET = exports.API_URL = exports.MIN_BTC_AMOUNT = void 0;
+exports.keyStoreSchema = exports.EOS_RPC_URL = exports.API_SECRET = exports.API_URL = exports.MIN_BTC_AMOUNT = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.MIN_BTC_AMOUNT = 0.01;
 exports.API_URL = process.env.ACCOUNT_INITIALIZER_API_BASE_URL || "";
 exports.API_SECRET = process.env.ACCOUNT_INITIALIZER_API_SECRET || "";
+exports.EOS_RPC_URL = process.env.EOS_RPC_URL || "";
 exports.keyStoreSchema = {
     type: "object",
     required: ["crypto", "id", "version", "address"],
