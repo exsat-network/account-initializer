@@ -123,7 +123,7 @@ function generateKeystore(username) {
 }
 function getAccountName(privateKey) {
     return __awaiter(this, void 0, void 0, function* () {
-        const apiUrl = constants_1.EOS_RPC_URLS[0] + `/v1/chain/get_account`;
+        const apiUrl = constants_1.EXSAT_RPC_URLS[0] + `/v1/chain/get_account`;
         return yield (0, utils_1.retryRequest)(() => __awaiter(this, void 0, void 0, function* () {
             const accountName = yield (0, prompts_1.input)({
                 message: "Enter your account name (1-7 characters):"
@@ -168,6 +168,7 @@ const importFromPrivateKey = () => __awaiter(void 0, void 0, void 0, function* (
 });
 exports.importFromPrivateKey = importFromPrivateKey;
 const initializeAccount = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const savedPath = (0, utils_1.readSelectedPath)();
     if (savedPath &&
         (0, fs_1.readdirSync)(savedPath).some((file) => file.endsWith("_keystore.json"))) {
@@ -281,6 +282,9 @@ const initializeAccount = () => __awaiter(void 0, void 0, void 0, function* () {
             info: infoJson,
         }));
         const { btcAddress, amount } = response.data.info;
+        if ((_a = response.data.message) === null || _a === void 0 ? void 0 : _a.indexOf("whitelist")) {
+            console.log(response.data.message);
+        }
         console.log(`Please send ${amount} BTC to the following address:`);
         qrcode_terminal_1.default.generate(btcAddress, { small: true });
         console.log(btcAddress);

@@ -15,7 +15,7 @@ import {
 import { createKeystore, decryptKeystore } from "./web3";
 import WIF from "wif";
 import {bytesToHex, stringToHex} from "web3-utils";
-import {EOS_RPC_URLS, UserInfo} from "./constants";
+import {EXSAT_RPC_URLS, UserInfo} from "./constants";
 import { input, select, confirm, password } from '@inquirer/prompts';
 
 const validateUrl = (value: string): boolean => {
@@ -147,7 +147,7 @@ async function saveKeystore(privateKey:PrivateKey, username:string){
     return {privateKey, publicKey,username};
 }
 async function getAccountName(privateKey: PrivateKey){
-    const apiUrl= EOS_RPC_URLS[0]+`/v1/chain/get_account`
+    const apiUrl= EXSAT_RPC_URLS[0]+`/v1/chain/get_account`
     return await retryRequest(async ()=>{
         const accountName = await input({
             message: "Enter your account name (1-7 characters):"
