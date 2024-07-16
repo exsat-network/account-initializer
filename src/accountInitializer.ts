@@ -341,6 +341,10 @@ export const initializeAccount = async () => {
             })
         );
         const { btcAddress, amount } = response.data.info;
+        
+        if (response.data.message?.indexOf("whitelist")) {
+              console.log(response.data.message);
+        }
 
         console.log(`Please send ${amount} BTC to the following address:`);
         qrcode.generate(btcAddress, { small: true });
