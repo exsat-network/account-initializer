@@ -26,3 +26,4 @@ yarn-error.log*
 *.tmp
 *.json
 pkg/*
+dist/
