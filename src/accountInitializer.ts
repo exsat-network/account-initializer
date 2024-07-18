@@ -88,11 +88,27 @@ const checkUsernameRegisterOrder = async (
     }
 };
 async function saveKeystore(privateKey:PrivateKey, username:string){
-    const passwordInput = await password({
+    let passwordInput = await password({
         message: "Enter a password to encrypt your private key(>= 6 digits): ",
         mask: '*',
         validate: (input) => input.length >= 6 || "Password must be at least 6 characters long."
     });
+    let passwordConfirmInput = await password({
+        message: "Confirm your password: ",
+        mask: '*',
+    });
+    while(passwordInput !== passwordConfirmInput){
+        console.log(`\n${cmdRedFont("Password not match, please try again.")}\n`);
+        passwordInput = await password({
+            message: "Enter a password to encrypt your private key(>= 6 digits): ",
+            mask: '*',
+            validate: (input) => input.length >= 6 || "Password must be at least 6 characters long."
+        });
+        passwordConfirmInput = await password({
+            message: "Confirm your password: ",
+            mask: '*',        });
+    }
+
 
     const keystore = await createKeystore(
         `${bytesToHex(WIF.decode(privateKey.toWif(),128).privateKey)}`,
@@ -137,9 +153,6 @@ async function saveKeystore(privateKey:PrivateKey, username:string){
     );
     const publicKey = privateKey.toPublic().toString();
 
-    console.log(`\nPrivate Key: ${cmdGreenFont(privateKey.toString())}`);
-
-    console.log(`Public Key: ${cmdGreenFont(publicKey)}\n`);
     console.log("Key pair generation successful.\n");
 
     await saveKeystore(privateKey, username);
@@ -164,94 +177,7 @@ async function getAccountName(privateKey: PrivateKey){
         throw new Error("Account name is not matched.");
     },3);
 }
-export const importFromMnemonic = async ()=> {
-        const mnemonic = await input({
-            message: "Enter your mnemonic phrase (12 words):"})
-
-        const seed = mnemonicToSeedSync(mnemonic.trim());
-        const master = HDKey.fromMasterSeed(Buffer.from(seed));
-        const node = master.derive("m/44'/194'/0'/0/0");
-
-        const privateKey = PrivateKey.from(
-            WIF.encode(128, node.privateKey, false).toString()
-        );
-
-        const publicKey = privateKey.toPublic().toString();
-
-        console.log(`\nPrivate Key: ${cmdGreenFont(privateKey.toString())}`);
-        console.log(`Public Key: ${cmdGreenFont(publicKey)}\n`);
-        console.log("Key pair generation successful.\n");
-        const username = await getAccountName(privateKey);
-        await saveKeystore(privateKey, username);
-
-}
-export const importFromPrivateKey =async () => {
-    await retryRequest(async ()=>{
-        const privateKeyInput = await input({
-            message: "Enter your private key (64 characters):"
-        })
-        const privateKey = PrivateKey.from(
-            privateKeyInput
-        );
-        const username = await getAccountName(privateKey);
-        await saveKeystore(privateKey, username);
-    },3)
-
-}
-
-export const initializeAccount = async () => {
-    const savedPath = readSelectedPath();
-
-    if (
-        savedPath &&
-        readdirSync(savedPath).some((file) => file.endsWith("_keystore.json"))
-    ) {
-        console.log(`\nAn account has already been created in ${savedPath}.`);
-        return;
-    }
-
-    let username = await input({
-        message: "\nEnter a username (1-7 characters, a-z): ",
-    });
-
-    if (await checkUsernameRegisterOrder(username)) {
-        console.log(
-            "Username is registering . Please wait for the email or change other username."
-        );
-        return;
-    }
-
-    while (
-        !validateUsername(username) ||
-        !(await checkUsernameWithBackend(username))
-        ) {
-        console.log(
-            "Invalid or already taken username. Please enter a username that is 1-7 characters long, contains only a-z and 1-5, and is not already taken."
-        );
-        username = await input({
-            message: "Enter a username (1-7 characters, a-z, 1-5): ",
-        });
-    }
-
-    let email = await input({
-        message: "\nEnter your email address(for emergency notify): ",
-    });
-    let confirmEmail = await input({
-        message: "Confirm your email address: ",
-    });
-
-    while (email !== confirmEmail || !validateEmail(email)) {
-        console.log(
-            "Email addresses do not match or are invalid. Please enter your email address again."
-        );
-        email = await input({
-            message: "Enter your email address(for emergency notify): ",
-        });
-        confirmEmail = await input({
-            message: "Confirm your email address: ",
-        });
-    }
-
+async function addMoreInformation(){
     const addInfo = await confirm({
         message: "Do you want to add more information for promotion? : ",
     });
@@ -316,20 +242,116 @@ export const initializeAccount = async () => {
             }
         }
     }
+    // @ts-ignore
+    return infoJson;
+}
 
-    const roleOptions = [
-        { name: "Pool (Synchronizer)", value: "Pool" },
-        { name: "Validator", value: "Validator" },
-        { name: "Custodian SP", value: "Custodian SP" },
-    ];
 
-    const role = await select({
-        message: "Select a role:",
-        choices: roleOptions,
+export const importFromMnemonic = async ()=> {
+        const mnemonic = await input({
+            message: "Enter your mnemonic phrase (12 words):"})
+
+        const seed = mnemonicToSeedSync(mnemonic.trim());
+        const master = HDKey.fromMasterSeed(Buffer.from(seed));
+        const node = master.derive("m/44'/194'/0'/0/0");
+
+        const privateKey = PrivateKey.from(
+            WIF.encode(128, node.privateKey, false).toString()
+        );
+
+        const publicKey = privateKey.toPublic().toString();
+
+        console.log("keystore generation successful.\n");
+        const username = await getAccountName(privateKey);
+        await saveKeystore(privateKey, username);
+
+}
+export const importFromPrivateKey =async () => {
+    await retryRequest(async ()=>{
+        const privateKeyInput = await input({
+            message: "Enter your private key (64 characters):"
+        })
+        const privateKey = PrivateKey.from(
+            privateKeyInput
+        );
+        console.log("keystore generation successful.\n");
+        const username = await getAccountName(privateKey);
+        await saveKeystore(privateKey, username);
+    },3)
+
+}
+
+export const initializeAccount = async (role?) => {
+    const savedPath = readSelectedPath();
+
+    if (
+        savedPath &&
+        readdirSync(savedPath).some((file) => file.endsWith("_keystore.json"))
+    ) {
+        console.log(`\nAn account has already been created in ${savedPath}.`);
+        return;
+    }
+
+    let username = await input({
+        message: "\nEnter a username (1-7 characters, a-z): ",
     });
 
-    const {publicKey} = await generateKeystore(username);
+    if (await checkUsernameRegisterOrder(username)) {
+        console.log(
+            "Username is registering . Please wait for the email or change other username."
+        );
+        return;
+    }
 
+    while (
+        !validateUsername(username) ||
+        !(await checkUsernameWithBackend(username))
+        ) {
+        console.log(
+            "Invalid or already taken username. Please enter a username that is 1-7 characters long, contains only a-z and 1-5, and is not already taken."
+        );
+        username = await input({
+            message: "Enter a username (1-7 characters, a-z, 1-5): ",
+        });
+    }
+
+    let email = await input({
+        message: "\nEnter your email address(for emergency notify): ",
+    });
+    let confirmEmail = await input({
+        message: "Confirm your email address: ",
+    });
+
+    while (email !== confirmEmail || !validateEmail(email)) {
+        console.log(
+            "Email addresses do not match or are invalid. Please enter your email address again."
+        );
+        email = await input({
+            message: "Enter your email address(for emergency notify): ",
+        });
+        confirmEmail = await input({
+            message: "Confirm your email address: ",
+        });
+    }
+
+
+
+    const roleOptions = [
+        { name: "Synchronizer", value: "Synchronizer" },
+        { name: "Validator", value: "Validator" },
+    ];
+
+    if(!role){
+        role = await select({
+            message: "Select a role:",
+            choices: roleOptions,
+        });
+    }
+
+    const {publicKey} = await generateKeystore(username);
+    // @ts-ignore
+    let infoJson:string;
+    //infoJson = await addMoreInformation();
     try {
         const response = await retryRequest(() =>
             axiosInstance.post("/api/users/create-user", {
@@ -346,8 +368,18 @@ export const initializeAccount = async () => {
         qrcode.generate(btcAddress, { small: true });
         console.log(btcAddress);
 
+        const response3 = await retryRequest(() =>
+            axiosInstance.get("/api/config/exsat_config")
+        );
+        console.log(`\nNetwork:${response3.data.info.btc_network}`)
         const txid = await input({
-            message: "Enter the transaction ID after sending BTC: ",
+            message: `Enter the transaction ID after sending BTC: `,
+            validate:(input:string) =>{
+                if(input.length > 64){
+                    return "Invalid transaction ID.";
+                }
+                return true;
+            }
         });
 
         const response2 = await retryRequest(() =>

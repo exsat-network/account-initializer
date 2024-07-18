@@ -205,7 +205,7 @@ export const initializeAccount = async () => {
   }
 
   const roleOptions = [
-    "\n1. Pool (Synchronizer)",
+    "\n1. Synchronizer",
     "2. Validator",
     "3. Custodian SP",
   ];

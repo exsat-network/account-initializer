@@ -85,11 +85,27 @@ const checkUsernameRegisterOrder = (username) => __awaiter(void 0, void 0, void 
 });
 function saveKeystore(privateKey, username) {
     return __awaiter(this, void 0, void 0, function* () {
-        const passwordInput = yield (0, prompts_1.password)({
+        let passwordInput = yield (0, prompts_1.password)({
             message: "Enter a password to encrypt your private key(>= 6 digits): ",
             mask: '*',
             validate: (input) => input.length >= 6 || "Password must be at least 6 characters long."
         });
+        let passwordConfirmInput = yield (0, prompts_1.password)({
+            message: "Confirm your password: ",
+            mask: '*',
+        });
+        while (passwordInput !== passwordConfirmInput) {
+            console.log(`\n${(0, utils_1.cmdRedFont)("Password not match, please try again.")}\n`);
+            passwordInput = yield (0, prompts_1.password)({
+                message: "Enter a password to encrypt your private key(>= 6 digits): ",
+                mask: '*',
+                validate: (input) => input.length >= 6 || "Password must be at least 6 characters long."
+            });
+            passwordConfirmInput = yield (0, prompts_1.password)({
+                message: "Confirm your password: ",
+                mask: '*',
+            });
+        }
         const keystore = yield (0, web3_1.createKeystore)(`${(0, web3_utils_1.bytesToHex)(wif_1.default.decode(privateKey.toWif(), 128).privateKey)}`, passwordInput, username);
         console.log(`\nKeystore created successfully.\n`);
         // console.log(keystore);
@@ -114,8 +130,6 @@ function generateKeystore(username) {
         const node = master.derive("m/44'/194'/0'/0/0");
         const privateKey = antelope_1.PrivateKey.from(wif_1.default.encode(128, node.privateKey, false).toString());
         const publicKey = privateKey.toPublic().toString();
-        console.log(`\nPrivate Key: ${(0, utils_1.cmdGreenFont)(privateKey.toString())}`);
-        console.log(`Public Key: ${(0, utils_1.cmdGreenFont)(publicKey)}\n`);
         console.log("Key pair generation successful.\n");
         yield saveKeystore(privateKey, username);
         return { privateKey, publicKey, username };
@@ -140,6 +154,71 @@ function getAccountName(privateKey) {
         }), 3);
     });
 }
+function addMoreInformation() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const addInfo = yield (0, prompts_1.confirm)({
+            message: "Do you want to add more information for promotion? : ",
+        });
+        let infoJson;
+        if (addInfo) {
+            const inputMethod = yield (0, prompts_1.confirm)({
+                message: "\n* Manually enter the information [y]\n* Import it from a JSON file from profile.html [n]:\n ",
+            });
+            if (inputMethod) {
+                // let website = await input({ message: "Enter your website URL: " });
+                // while (!validateUrl(website)) {
+                //   console.log("Invalid URL. Please enter a valid website URL.");
+                //   website = await input({ message: "Enter your website URL: " });
+                // }
+                const name = yield (0, prompts_1.input)({ message: "Enter your group or company name: " });
+                const profile = yield (0, prompts_1.input)({
+                    message: "Enter your profile (supports markdown): ",
+                });
+                let logo = yield (0, prompts_1.input)({
+                    message: "Enter your logo link URL(256x256px or 1024x1024px): ",
+                });
+                while (!validateUrl(logo)) {
+                    console.log("Invalid URL. Please enter a valid logo link URL.");
+                    logo = yield (0, prompts_1.input)({
+                        message: "Enter your logo link URL(256x256px or 1024x1024px): ",
+                    });
+                }
+                // const pub_email = await input({ message: "Enter your public Email: " });
+                infoJson = JSON.stringify({
+                    // website,
+                    logo,
+                    name,
+                    profile,
+                    // email: pub_email,
+                });
+            }
+            else {
+                const filePath = yield (0, prompts_1.input)({
+                    message: "Enter the path to your JSON file: ",
+                });
+                try {
+                    const data = JSON.parse((0, fs_1.readFileSync)(filePath, "utf-8"));
+                    console.log(data);
+                    if (validateUserInfo(data)) {
+                        infoJson = JSON.stringify(data);
+                    }
+                    else {
+                        console.log("Invalid JSON format. Please check the file and try again.");
+                        return;
+                    }
+                }
+                catch (error) {
+                    if (error instanceof Error) {
+                        console.error("Error reading JSON file:", error.message);
+                    }
+                    return;
+                }
+            }
+        }
+        // @ts-ignore
+        return infoJson;
+    });
+}
 const importFromMnemonic = () => __awaiter(void 0, void 0, void 0, function* () {
     const mnemonic = yield (0, prompts_1.input)({
         message: "Enter your mnemonic phrase (12 words):"
@@ -149,9 +228,7 @@ const importFromMnemonic = () => __awaiter(void 0, void 0, void 0, function* () 
     const node = master.derive("m/44'/194'/0'/0/0");
     const privateKey = antelope_1.PrivateKey.from(wif_1.default.encode(128, node.privateKey, false).toString());
     const publicKey = privateKey.toPublic().toString();
-    console.log(`\nPrivate Key: ${(0, utils_1.cmdGreenFont)(privateKey.toString())}`);
-    console.log(`Public Key: ${(0, utils_1.cmdGreenFont)(publicKey)}\n`);
-    console.log("Key pair generation successful.\n");
+    console.log("keystore generation successful.\n");
     const username = yield getAccountName(privateKey);
     yield saveKeystore(privateKey, username);
 });
@@ -162,12 +239,13 @@ const importFromPrivateKey = () => __awaiter(void 0, void 0, void 0, function* (
             message: "Enter your private key (64 characters):"
         });
         const privateKey = antelope_1.PrivateKey.from(privateKeyInput);
+        console.log("keystore generation successful.\n");
         const username = yield getAccountName(privateKey);
         yield saveKeystore(privateKey, username);
     }), 3);
 });
 exports.importFromPrivateKey = importFromPrivateKey;
-const initializeAccount = () => __awaiter(void 0, void 0, void 0, function* () {
+const initializeAccount = (role) => __awaiter(void 0, void 0, void 0, function* () {
     const savedPath = (0, utils_1.readSelectedPath)();
     if (savedPath &&
         (0, fs_1.readdirSync)(savedPath).some((file) => file.endsWith("_keystore.json"))) {
@@ -203,75 +281,20 @@ const initializeAccount = () => __awaiter(void 0, void 0, void 0, function* () {
             message: "Confirm your email address: ",
         });
     }
-    const addInfo = yield (0, prompts_1.confirm)({
-        message: "Do you want to add more information for promotion? : ",
-    });
-    let infoJson;
-    if (addInfo) {
-        const inputMethod = yield (0, prompts_1.confirm)({
-            message: "\n* Manually enter the information [y]\n* Import it from a JSON file from profile.html [n]:\n ",
-        });
-        if (inputMethod) {
-            // let website = await input({ message: "Enter your website URL: " });
-            // while (!validateUrl(website)) {
-            //   console.log("Invalid URL. Please enter a valid website URL.");
-            //   website = await input({ message: "Enter your website URL: " });
-            // }
-            const name = yield (0, prompts_1.input)({ message: "Enter your group or company name: " });
-            const profile = yield (0, prompts_1.input)({
-                message: "Enter your profile (supports markdown): ",
-            });
-            let logo = yield (0, prompts_1.input)({
-                message: "Enter your logo link URL(256x256px or 1024x1024px): ",
-            });
-            while (!validateUrl(logo)) {
-                console.log("Invalid URL. Please enter a valid logo link URL.");
-                logo = yield (0, prompts_1.input)({
-                    message: "Enter your logo link URL(256x256px or 1024x1024px): ",
-                });
-            }
-            // const pub_email = await input({ message: "Enter your public Email: " });
-            infoJson = JSON.stringify({
-                // website,
-                logo,
-                name,
-                profile,
-                // email: pub_email,
-            });
-        }
-        else {
-            const filePath = yield (0, prompts_1.input)({
-                message: "Enter the path to your JSON file: ",
-            });
-            try {
-                const data = JSON.parse((0, fs_1.readFileSync)(filePath, "utf-8"));
-                console.log(data);
-                if (validateUserInfo(data)) {
-                    infoJson = JSON.stringify(data);
-                }
-                else {
-                    console.log("Invalid JSON format. Please check the file and try again.");
-                    return;
-                }
-            }
-            catch (error) {
-                if (error instanceof Error) {
-                    console.error("Error reading JSON file:", error.message);
-                }
-                return;
-            }
-        }
-    }
     const roleOptions = [
-        { name: "Pool (Synchronizer)", value: "Pool" },
+        { name: "Synchronizer", value: "Synchronizer" },
         { name: "Validator", value: "Validator" },
-        { name: "Custodian SP", value: "Custodian SP" },
     ];
-    const role = yield (0, prompts_1.select)({
-        message: "Select a role:",
-        choices: roleOptions,
-    });
+    if (!role) {
+        role = yield (0, prompts_1.select)({
+            message: "Select a role:",
+            choices: roleOptions,
+        });
+    }
     const { publicKey } = yield generateKeystore(username);
+    // @ts-ignore
+    let infoJson;
+    //infoJson = await addMoreInformation();
     try {
         const response = yield (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post("/api/users/create-user", {
             username,
@@ -284,8 +307,16 @@ const initializeAccount = () => __awaiter(void 0, void 0, void 0, function* () {
         console.log(`Please send ${amount} BTC to the following address:`);
         qrcode_terminal_1.default.generate(btcAddress, { small: true });
         console.log(btcAddress);
+        const response3 = yield (0, utils_1.retryRequest)(() => utils_1.axiosInstance.get("/api/config/exsat_config"));
+        console.log(`\nNetwork:${response3.data.info.btc_network}`);
         const txid = yield (0, prompts_1.input)({
-            message: "Enter the transaction ID after sending BTC: ",
+            message: `Enter the transaction ID after sending BTC: `,
+            validate: (input) => {
+                if (input.length > 64) {
+                    return "Invalid transaction ID.";
+                }
+                return true;
+            }
         });
         const response2 = yield (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post("/api/users/submit-payment", {
             txid,

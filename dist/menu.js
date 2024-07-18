@@ -14,7 +14,7 @@ const accountInitializer_1 = require("./accountInitializer");
 const query_1 = require("./query");
 const btcResource_1 = require("./btcResource"); // Import the new function
 const prompts_1 = require("@inquirer/prompts");
-const showMenu = () => __awaiter(void 0, void 0, void 0, function* () {
+const showMenu = (options) => __awaiter(void 0, void 0, void 0, function* () {
     const choices = [
         { name: "Initialize Account", value: "1" },
         { name: "Query Account", value: "2" },
@@ -29,7 +29,7 @@ const showMenu = () => __awaiter(void 0, void 0, void 0, function* () {
     });
     switch (choice) {
         case "1":
-            yield (0, accountInitializer_1.initializeAccount)();
+            yield (0, accountInitializer_1.initializeAccount)(options === null || options === void 0 ? void 0 : options.role);
             break;
         case "2":
             yield (0, query_1.queryAccount)();

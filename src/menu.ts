@@ -3,7 +3,12 @@ import { queryAccount } from "./query";
 import { chargeBtcForResource } from "./btcResource"; // Import the new function
 import { select } from '@inquirer/prompts';
 
-export const showMenu = async () => {
+export type InitializeAccountOptions =
+    {
+      role?: 'Synchronizer' | 'Validator' ,
+    }
+
+export const showMenu = async (options?:InitializeAccountOptions) => {
   const choices = [
     { name: "Initialize Account", value: "1" },
     { name: "Query Account", value: "2" },
@@ -20,7 +25,7 @@ export const showMenu = async () => {
 
   switch (choice) {
     case "1":
-      await initializeAccount();
+      await initializeAccount(options?.role);
       break;
     case "2":
       await queryAccount();
