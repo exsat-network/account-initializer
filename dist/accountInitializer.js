@@ -290,7 +290,26 @@ const initializeAccount = async (role) => {
         });
     }
     let rewardAddress = '';
+    let commissionRate = '';
     if (role === "Validator") {
+        commissionRate = await (0, prompts_1.input)({
+            message: 'Enter commission rate (0-10000)',
+            validate: (input) => {
+                const number = Number(input);
+                if (!Number.isInteger(number) || number < 0 || number > 10000) {
+                    return 'Please enter a valid integer between 0 and 10000.';
+                }
+                return true;
+            }
+        });
+        rewardAddress = await (0, prompts_1.input)({
+            message: 'Enter Receiving Address', validate: (input) => {
+                if (!/^0x[a-fA-F0-9]{40}$/.test(input)) {
+                    return 'Please enter a valid account name.';
+                }
+                return true;
+            }
+        });
     }
     const { publicKey } = await generateKeystore(username);
     // @ts-ignore
@@ -303,6 +322,8 @@ const initializeAccount = async (role) => {
             publicKey,
             email,
             info: infoJson,
+            rewardAddress,
+            commissionRate,
         }));
         const { btcAddress, amount } = response.data.info;
         console.log(`Please send ${amount} BTC to the following address:`);
