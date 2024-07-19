@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -44,10 +35,10 @@ exports.axiosInstance = axios_1.default.create({
         "Content-Type": "application/json",
     },
 });
-const retryRequest = (fn, retries = 3) => __awaiter(void 0, void 0, void 0, function* () {
+const retryRequest = async (fn, retries = 3) => {
     for (let i = 0; i < retries; i++) {
         try {
-            return yield fn();
+            return await fn();
         }
         catch (error) {
             if (i === retries - 1)
@@ -55,21 +46,21 @@ const retryRequest = (fn, retries = 3) => __awaiter(void 0, void 0, void 0, func
             console.log(`Retrying... (${i + 1}/${retries})`);
         }
     }
-});
+};
 exports.retryRequest = retryRequest;
-const listDirectories = (currentPath) => __awaiter(void 0, void 0, void 0, function* () {
-    const files = yield fs_extra_1.default.readdir(currentPath);
+const listDirectories = async (currentPath) => {
+    const files = await fs_extra_1.default.readdir(currentPath);
     const directories = files.filter((file) => fs_extra_1.default.statSync(path_1.default.join(currentPath, file)).isDirectory());
     directories.unshift(".."); // Add parent directory option
     directories.unshift("."); // Add current directory option
     return directories;
-});
+};
 exports.listDirectories = listDirectories;
 const validatePath = (inputPath) => {
     return fs_extra_1.default.existsSync(inputPath) && fs_extra_1.default.statSync(inputPath).isDirectory();
 };
-const selectDirPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
-    const initialChoice = yield (0, prompts_1.select)({
+const selectDirPrompt = async () => {
+    const initialChoice = await (0, prompts_1.select)({
         message: "\nChoose a directory to save the keystore:",
         choices: [
             { name: "Navigate To Select", value: "1" },
@@ -78,7 +69,7 @@ const selectDirPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
     });
     if (initialChoice === "2") {
         while (true) {
-            const manualPath = yield (0, prompts_1.input)({
+            const manualPath = await (0, prompts_1.input)({
                 message: "Please enter the directory path: ",
                 validate: (input) => {
                     if (validatePath(input)) {
@@ -96,8 +87,8 @@ const selectDirPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
         let selectedPath = "";
         let finalSelection = false;
         while (!finalSelection) {
-            const directories = yield (0, exports.listDirectories)(currentPath);
-            const index = yield (0, prompts_1.select)({
+            const directories = await (0, exports.listDirectories)(currentPath);
+            const index = await (0, prompts_1.select)({
                 message: `\nCurrent directory: ${currentPath}\nSelect a directory:`,
                 choices: directories.map((dir, idx) => ({
                     name: dir,
@@ -114,7 +105,7 @@ const selectDirPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
             else {
                 currentPath = path_1.default.resolve(currentPath, directory);
             }
-            const finalize = yield (0, prompts_1.confirm)({
+            const finalize = await (0, prompts_1.confirm)({
                 message: "Do you want to finalize this directory selection? (Y/N): ",
             });
             if (finalize) {
@@ -129,7 +120,7 @@ const selectDirPrompt = () => __awaiter(void 0, void 0, void 0, function* () {
         console.log('Invalid choice. Please restart and enter "1" or "2".');
         process.exit(1);
     }
-});
+};
 exports.selectDirPrompt = selectDirPrompt;
 const cmdGreenFont = (msg) => {
     return `\x1b[32m${msg}\x1b[0m`;

@@ -22,26 +22,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decryptKeystore = exports.createKeystore = exports.parseAndValidatePrivateKey = exports.secp256k1 = void 0;
 const antelope_1 = require("@wharfkit/antelope");
 const aes_js_1 = require("ethereum-cryptography/aes.js");
 const ethereumCryptography = __importStar(require("ethereum-cryptography/secp256k1.js"));
 const wif_1 = __importDefault(require("wif"));
-exports.secp256k1 = (_a = ethereumCryptography.secp256k1) !== null && _a !== void 0 ? _a : ethereumCryptography;
+exports.secp256k1 = ethereumCryptography.secp256k1 ?? ethereumCryptography;
 const pbkdf2_js_1 = require("ethereum-cryptography/pbkdf2.js");
 const scrypt_js_1 = require("ethereum-cryptography/scrypt.js");
 const web3_errors_1 = require("web3-errors");
@@ -79,7 +69,7 @@ const parseAndValidatePrivateKey = (data, ignoreLength) => {
     try {
         privateKeyUint8Array = (0, web3_utils_1.isUint8Array)(data) ? data : (0, web3_utils_1.bytesToUint8Array)(data);
     }
-    catch (_a) {
+    catch {
         throw new web3_errors_1.InvalidPrivateKeyError();
     }
     if (!ignoreLength && privateKeyUint8Array.byteLength !== 32) {
@@ -88,13 +78,12 @@ const parseAndValidatePrivateKey = (data, ignoreLength) => {
     return privateKeyUint8Array;
 };
 exports.parseAndValidatePrivateKey = parseAndValidatePrivateKey;
-const createKeystore = (privateKey, password, username, options) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c, _d, _e, _f, _g, _h;
+const createKeystore = async (privateKey, password, username, options) => {
     const privateKeyUint8Array = (0, exports.parseAndValidatePrivateKey)(privateKey);
     const privekeyByte = (0, web3_utils_1.hexToBytes)(`${privateKey}`);
     // if given salt or iv is a string, convert it to a Uint8Array
     let salt;
-    if (options === null || options === void 0 ? void 0 : options.salt) {
+    if (options?.salt) {
         salt =
             typeof options.salt === "string"
                 ? (0, web3_utils_1.hexToBytes)(options.salt)
@@ -108,7 +97,7 @@ const createKeystore = (privateKey, password, username, options) => __awaiter(vo
     }
     const uint8ArrayPassword = typeof password === "string" ? (0, web3_utils_1.hexToBytes)((0, web3_utils_1.utf8ToHex)(password)) : password;
     let initializationVector;
-    if (options === null || options === void 0 ? void 0 : options.iv) {
+    if (options?.iv) {
         initializationVector =
             typeof options.iv === "string" ? (0, web3_utils_1.hexToBytes)(options.iv) : options.iv;
         if (initializationVector.length !== 16) {
@@ -118,15 +107,15 @@ const createKeystore = (privateKey, password, username, options) => __awaiter(vo
     else {
         initializationVector = (0, web3_utils_1.randomBytes)(16);
     }
-    const kdf = (_b = options === null || options === void 0 ? void 0 : options.kdf) !== null && _b !== void 0 ? _b : "scrypt";
+    const kdf = options?.kdf ?? "scrypt";
     let derivedKey;
     let kdfparams;
     // derive key from key derivation function
     if (kdf === "pbkdf2") {
         kdfparams = {
-            dklen: (_c = options === null || options === void 0 ? void 0 : options.dklen) !== null && _c !== void 0 ? _c : 32,
+            dklen: options?.dklen ?? 32,
             salt: (0, web3_utils_1.bytesToHex)(salt).replace("0x", ""),
-            c: (_d = options === null || options === void 0 ? void 0 : options.c) !== null && _d !== void 0 ? _d : 262144,
+            c: options?.c ?? 262144,
             prf: "hmac-sha256",
         };
         if (kdfparams.c < 1000) {
@@ -137,10 +126,10 @@ const createKeystore = (privateKey, password, username, options) => __awaiter(vo
     }
     else if (kdf === "scrypt") {
         kdfparams = {
-            n: (_e = options === null || options === void 0 ? void 0 : options.n) !== null && _e !== void 0 ? _e : 8192,
-            r: (_f = options === null || options === void 0 ? void 0 : options.r) !== null && _f !== void 0 ? _f : 8,
-            p: (_g = options === null || options === void 0 ? void 0 : options.p) !== null && _g !== void 0 ? _g : 1,
-            dklen: (_h = options === null || options === void 0 ? void 0 : options.dklen) !== null && _h !== void 0 ? _h : 32,
+            n: options?.n ?? 8192,
+            r: options?.r ?? 8,
+            p: options?.p ?? 1,
+            dklen: options?.dklen ?? 32,
             salt: (0, web3_utils_1.bytesToHex)(salt).replace("0x", ""),
         };
         derivedKey = (0, scrypt_js_1.scryptSync)(uint8ArrayPassword, salt, kdfparams.n, kdfparams.p, kdfparams.r, kdfparams.dklen);
@@ -148,7 +137,7 @@ const createKeystore = (privateKey, password, username, options) => __awaiter(vo
     else {
         throw new web3_errors_1.InvalidKdfError();
     }
-    const cipher = yield (0, aes_js_1.encrypt)(privateKeyUint8Array, derivedKey.slice(0, 16), initializationVector, "aes-128-ctr");
+    const cipher = await (0, aes_js_1.encrypt)(privateKeyUint8Array, derivedKey.slice(0, 16), initializationVector, "aes-128-ctr");
     const ciphertext = (0, web3_utils_1.bytesToHex)(cipher).slice(2);
     const pvKeyFromWif = antelope_1.PrivateKey.from(wif_1.default.encode(128, Buffer.from(privekeyByte), false).toString());
     const publicKey = pvKeyFromWif.toPublic().toString();
@@ -169,9 +158,9 @@ const createKeystore = (privateKey, password, username, options) => __awaiter(vo
             mac,
         },
     };
-});
+};
 exports.createKeystore = createKeystore;
-const decryptKeystore = (keystore, password, nonStrict) => __awaiter(void 0, void 0, void 0, function* () {
+const decryptKeystore = async (keystore, password, nonStrict) => {
     const json = typeof keystore === "object"
         ? keystore
         : JSON.parse(nonStrict ? keystore.toLowerCase() : keystore);
@@ -204,8 +193,8 @@ const decryptKeystore = (keystore, password, nonStrict) => __awaiter(void 0, voi
     if (mac !== json.crypto.mac) {
         throw new web3_errors_1.KeyDerivationError();
     }
-    const seed = yield (0, aes_js_1.decrypt)((0, web3_utils_1.hexToBytes)(json.crypto.ciphertext), derivedKey.slice(0, 16), (0, web3_utils_1.hexToBytes)(json.crypto.cipherparams.iv));
+    const seed = await (0, aes_js_1.decrypt)((0, web3_utils_1.hexToBytes)(json.crypto.ciphertext), derivedKey.slice(0, 16), (0, web3_utils_1.hexToBytes)(json.crypto.cipherparams.iv));
     const pvKeyFromWif = antelope_1.PrivateKey.from(wif_1.default.encode(128, Buffer.from(seed), false).toString());
     return pvKeyFromWif.toString();
-});
+};
 exports.decryptKeystore = decryptKeystore;
