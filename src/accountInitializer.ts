@@ -2,7 +2,7 @@ import { generateMnemonic, mnemonicToSeedSync } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import HDKey from 'hdkey';
 import { PrivateKey } from '@wharfkit/antelope';
-import { writeFileSync, readdirSync, readFileSync } from 'fs';
+import { writeFileSync, readdirSync } from 'fs';
 import qrcode from 'qrcode-terminal';
 import {
   axiosInstance,
@@ -15,28 +15,8 @@ import {
 import { createKeystore } from './web3';
 import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
-import { EXSAT_RPC_URLS, UserInfo } from './constants';
-import { input, select, confirm, password } from '@inquirer/prompts';
-
-const validateUrl = (value: string): boolean => {
-  try {
-    new URL(value);
-    return true;
-  } catch (_) {
-    return false;
-  }
-};
-
-const validateUserInfo = (data: any): data is UserInfo => {
-  return (
-    // typeof data.website === "string" &&
-    // validateUrl(data.website) &&
-    typeof data.logo === 'string' &&
-    validateUrl(data.logo) &&
-    typeof data.name === 'string' &&
-    typeof data.profile === 'string'
-  );
-};
+import { EXSAT_RPC_URLS } from './constants';
+import { input, select, password } from '@inquirer/prompts';
 
 const validateUsername = (username: string): boolean => {
   const regex = /^[a-z1-5]{1,8}$/;
@@ -183,77 +163,6 @@ async function getAccountName(privateKey: PrivateKey) {
     throw new Error('Account name is not matched.');
   }, 3);
 }
-async function addMoreInformation() {
-  const addInfo = await confirm({
-    message: 'Do you want to add more information for promotion? : ',
-  });
-
-  let infoJson: string;
-
-  if (addInfo) {
-    const inputMethod = await confirm({
-      message:
-        '\n* Manually enter the information [y]\n* Import it from a JSON file from profile.html [n]:\n ',
-    });
-    if (inputMethod) {
-      // let website = await input({ message: "Enter your website URL: " });
-      // while (!validateUrl(website)) {
-      //   console.log("Invalid URL. Please enter a valid website URL.");
-      //   website = await input({ message: "Enter your website URL: " });
-      // }
-      const name = await input({
-        message: 'Enter your group or company name: ',
-      });
-      const profile = await input({
-        message: 'Enter your profile (supports markdown): ',
-      });
-
-      let logo = await input({
-        message: 'Enter your logo link URL(256x256px or 1024x1024px): ',
-      });
-      while (!validateUrl(logo)) {
-        console.log('Invalid URL. Please enter a valid logo link URL.');
-        logo = await input({
-          message: 'Enter your logo link URL(256x256px or 1024x1024px): ',
-        });
-      }
-
-      // const pub_email = await input({ message: "Enter your public Email: " });
-
-      infoJson = JSON.stringify({
-        // website,
-        logo,
-        name,
-        profile,
-        // email: pub_email,
-      });
-    } else {
-      const filePath = await input({
-        message: 'Enter the path to your JSON file: ',
-      });
-      try {
-        const data = JSON.parse(readFileSync(filePath, 'utf-8'));
-        console.log(data);
-        if (validateUserInfo(data)) {
-          infoJson = JSON.stringify(data);
-        } else {
-          console.log(
-            'Invalid JSON format. Please check the file and try again.',
-          );
-          return;
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error('Error reading JSON file:', error.message);
-        }
-
-        return;
-      }
-    }
-  }
-  // @ts-ignore
-  return infoJson;
-}
 
 export const importFromMnemonic = async () => {
   try {
@@ -382,7 +291,7 @@ export const initializeAccount = async (role?) => {
     });
   }
   const { publicKey } = await generateKeystore(username);
-  let infoJson: string;
+  const infoJson: string = '{}';
   //infoJson = await addMoreInformation();
   try {
     const response = await retryRequest(() =>

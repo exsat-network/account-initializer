@@ -16,24 +16,6 @@ const wif_1 = __importDefault(require("wif"));
 const web3_utils_1 = require("web3-utils");
 const constants_1 = require("./constants");
 const prompts_1 = require("@inquirer/prompts");
-const validateUrl = (value) => {
-    try {
-        new URL(value);
-        return true;
-    }
-    catch (_) {
-        return false;
-    }
-};
-const validateUserInfo = (data) => {
-    return (
-    // typeof data.website === "string" &&
-    // validateUrl(data.website) &&
-    typeof data.logo === 'string' &&
-        validateUrl(data.logo) &&
-        typeof data.name === 'string' &&
-        typeof data.profile === 'string');
-};
 const validateUsername = (username) => {
     const regex = /^[a-z1-5]{1,8}$/;
     return regex.test(username);
@@ -143,71 +125,6 @@ async function getAccountName(privateKey) {
         throw new Error('Account name is not matched.');
     }, 3);
 }
-async function addMoreInformation() {
-    const addInfo = await (0, prompts_1.confirm)({
-        message: 'Do you want to add more information for promotion? : ',
-    });
-    let infoJson;
-    if (addInfo) {
-        const inputMethod = await (0, prompts_1.confirm)({
-            message: '\n* Manually enter the information [y]\n* Import it from a JSON file from profile.html [n]:\n ',
-        });
-        if (inputMethod) {
-            // let website = await input({ message: "Enter your website URL: " });
-            // while (!validateUrl(website)) {
-            //   console.log("Invalid URL. Please enter a valid website URL.");
-            //   website = await input({ message: "Enter your website URL: " });
-            // }
-            const name = await (0, prompts_1.input)({
-                message: 'Enter your group or company name: ',
-            });
-            const profile = await (0, prompts_1.input)({
-                message: 'Enter your profile (supports markdown): ',
-            });
-            let logo = await (0, prompts_1.input)({
-                message: 'Enter your logo link URL(256x256px or 1024x1024px): ',
-            });
-            while (!validateUrl(logo)) {
-                console.log('Invalid URL. Please enter a valid logo link URL.');
-                logo = await (0, prompts_1.input)({
-                    message: 'Enter your logo link URL(256x256px or 1024x1024px): ',
-                });
-            }
-            // const pub_email = await input({ message: "Enter your public Email: " });
-            infoJson = JSON.stringify({
-                // website,
-                logo,
-                name,
-                profile,
-                // email: pub_email,
-            });
-        }
-        else {
-            const filePath = await (0, prompts_1.input)({
-                message: 'Enter the path to your JSON file: ',
-            });
-            try {
-                const data = JSON.parse((0, fs_1.readFileSync)(filePath, 'utf-8'));
-                console.log(data);
-                if (validateUserInfo(data)) {
-                    infoJson = JSON.stringify(data);
-                }
-                else {
-                    console.log('Invalid JSON format. Please check the file and try again.');
-                    return;
-                }
-            }
-            catch (error) {
-                if (error instanceof Error) {
-                    console.error('Error reading JSON file:', error.message);
-                }
-                return;
-            }
-        }
-    }
-    // @ts-ignore
-    return infoJson;
-}
 const importFromMnemonic = async () => {
     try {
         await (0, utils_1.retryRequest)(async () => {
@@ -315,7 +232,7 @@ const initializeAccount = async (role) => {
         });
     }
     const { publicKey } = await generateKeystore(username);
-    let infoJson;
+    const infoJson = '{}';
     //infoJson = await addMoreInformation();
     try {
         const response = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/users/create-user', {
