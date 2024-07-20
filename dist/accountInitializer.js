@@ -242,7 +242,7 @@ const initializeAccount = async (role) => {
             email,
             info: infoJson,
             rewardAddress,
-            commissionRate,
+            commissionRate: commissionRate ? Number(commissionRate) : 0,
         }));
         const { btcAddress, amount } = response.data.info;
         console.log(`Please send ${amount} BTC to the following address:`);
