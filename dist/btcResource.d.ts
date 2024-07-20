@@ -1,1 +1,1 @@
-export declare const chargeBtcForResource: () => Promise<void>;
+export declare const chargeBtcForResource: (encFile?: any) => Promise<void>;

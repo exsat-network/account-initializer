@@ -9,35 +9,36 @@ const constants_1 = require("./constants");
 const qrcode_terminal_1 = __importDefault(require("qrcode-terminal"));
 const fs_1 = require("fs");
 const prompts_1 = require("@inquirer/prompts");
-const chargeBtcForResource = async () => {
+const chargeBtcForResource = async (encFile) => {
     try {
-        let encFile = "";
-        const selectedPath = (0, utils_1.readSelectedPath)();
-        if (selectedPath) {
-            const files = (0, fs_1.readdirSync)(selectedPath).filter((file) => file.endsWith("_keystore.json"));
-            if (files.length > 0) {
-                encFile = files[0];
+        if (!encFile) {
+            const selectedPath = (0, utils_1.readSelectedPath)();
+            if (selectedPath) {
+                const files = (0, fs_1.readdirSync)(selectedPath).filter((file) => file.endsWith('_keystore.json'));
+                if (files.length > 0) {
+                    encFile = files[0];
+                }
+                else {
+                    const filePath = await (0, prompts_1.input)({
+                        message: 'Enter the path to your keystore file: ',
+                    });
+                    encFile = filePath;
+                }
             }
             else {
                 const filePath = await (0, prompts_1.input)({
-                    message: "Enter the path to your keystore file: ",
+                    message: 'Enter the path to your keystore file: ',
                 });
                 encFile = filePath;
             }
         }
-        else {
-            const filePath = await (0, prompts_1.input)({
-                message: "Enter the path to your keystore file: ",
-            });
-            encFile = filePath;
-        }
-        const keystore = (0, fs_1.readFileSync)(encFile, "utf-8");
+        const keystore = (0, fs_1.readFileSync)(encFile, 'utf-8');
         const keystoreInfo = JSON.parse(keystore);
-        let username = "";
-        const account = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post("/api/users/my", { publicKey: keystoreInfo.address }));
+        let username = '';
+        const account = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/users/my', { publicKey: keystoreInfo.address }));
         const accountInfo = account.data;
         console.log(`\nusername: ${accountInfo.info.username}\n`);
-        if (accountInfo.status === "success") {
+        if (accountInfo.status === 'success') {
             username = accountInfo.info.username;
         }
         else {
@@ -54,11 +55,11 @@ const chargeBtcForResource = async () => {
                 return true;
             },
         });
-        const response = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post("/api/payments/create-payment", {
+        const response = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/payments/create-payment', {
             username,
             amount: parseFloat(amountInput),
         }));
-        if (response.data.status != "success") {
+        if (response.data.status != 'success') {
             console.log(response.data.message);
             return;
         }
@@ -67,13 +68,13 @@ const chargeBtcForResource = async () => {
         qrcode_terminal_1.default.generate(btcAddress, { small: true });
         console.log(btcAddress);
         const txid = await (0, prompts_1.input)({
-            message: "Enter the transaction ID after sending BTC: ",
+            message: 'Enter the transaction ID after sending BTC: ',
         });
-        const response2 = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post("/api/payments/submit-payment", {
+        const response2 = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/payments/submit-payment', {
             txid,
             username,
         }));
-        if (response2.data.status === "success") {
+        if (response2.data.status === 'success') {
             console.log(response2.data.message);
         }
         else {
@@ -83,7 +84,7 @@ const chargeBtcForResource = async () => {
     }
     catch (error) {
         if (error instanceof Error) {
-            console.error("Error processing the request:", error.message);
+            console.error('Error processing the request:', error.message);
         }
     }
 };

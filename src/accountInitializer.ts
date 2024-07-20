@@ -1,7 +1,7 @@
 import { generateMnemonic, mnemonicToSeedSync } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import HDKey from 'hdkey';
-import { PrivateKey, PublicKey } from '@wharfkit/antelope';
+import { PrivateKey } from '@wharfkit/antelope';
 import { writeFileSync, readdirSync, readFileSync } from 'fs';
 import qrcode from 'qrcode-terminal';
 import {
@@ -12,9 +12,9 @@ import {
   retryRequest,
   selectDirPrompt,
 } from './utils';
-import { createKeystore, decryptKeystore } from './web3';
+import { createKeystore } from './web3';
 import WIF from 'wif';
-import { bytesToHex, stringToHex } from 'web3-utils';
+import { bytesToHex } from 'web3-utils';
 import { EXSAT_RPC_URLS, UserInfo } from './constants';
 import { input, select, confirm, password } from '@inquirer/prompts';
 
@@ -355,9 +355,9 @@ export const initializeAccount = async (role?) => {
       choices: roleOptions,
     });
   }
-  let rewardAddress=''
-  let commissionRate=''
-  if(role==="Validator"){
+  let rewardAddress = '';
+  let commissionRate = '';
+  if (role === 'Validator') {
     commissionRate = await input({
       message: 'Enter commission rate (0-10000)',
       validate: (input) => {
@@ -366,20 +366,20 @@ export const initializeAccount = async (role?) => {
           return 'Please enter a valid integer between 0 and 10000.';
         }
         return true;
-      }
+      },
     });
 
     rewardAddress = await input({
-      message: 'Enter Receiving Address', validate: (input: string) => {
+      message: 'Enter Receiving Address',
+      validate: (input: string) => {
         if (!/^0x[a-fA-F0-9]{40}$/.test(input)) {
           return 'Please enter a valid account name.';
         }
         return true;
-      }
+      },
     });
   }
   const { publicKey } = await generateKeystore(username);
-  // @ts-ignore
   let infoJson: string;
   //infoJson = await addMoreInformation();
   try {
