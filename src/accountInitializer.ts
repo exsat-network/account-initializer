@@ -281,7 +281,7 @@ export const initializeAccount = async (role?) => {
     });
 
     rewardAddress = await input({
-      message: 'Enter Receiving Address',
+      message: 'Enter Reward Address',
       validate: (input: string) => {
         if (!/^0x[a-fA-F0-9]{40}$/.test(input)) {
           return 'Please enter a valid account name.';
