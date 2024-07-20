@@ -48,7 +48,9 @@ const validateEmail = (email: string): boolean => {
   return regex.test(email);
 };
 
-const checkUsernameWithBackend = async (username: string): Promise<boolean> => {
+export const checkUsernameWithBackend = async (
+  username: string,
+): Promise<boolean> => {
   try {
     const response = await axiosInstance.post('/api/users/check-username', {
       username,
@@ -64,7 +66,7 @@ const checkUsernameWithBackend = async (username: string): Promise<boolean> => {
   }
 };
 
-const checkUsernameRegisterOrder = async (
+export const checkUsernameRegisterOrder = async (
   username: string,
 ): Promise<boolean> => {
   try {

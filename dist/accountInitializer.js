@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeAccount = exports.importFromPrivateKey = exports.importFromMnemonic = void 0;
+exports.initializeAccount = exports.importFromPrivateKey = exports.importFromMnemonic = exports.checkUsernameRegisterOrder = exports.checkUsernameWithBackend = void 0;
 const bip39_1 = require("@scure/bip39");
 const english_1 = require("@scure/bip39/wordlists/english");
 const hdkey_1 = __importDefault(require("hdkey"));
@@ -56,6 +56,7 @@ const checkUsernameWithBackend = async (username) => {
         return false;
     }
 };
+exports.checkUsernameWithBackend = checkUsernameWithBackend;
 const checkUsernameRegisterOrder = async (username) => {
     try {
         const response = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/users/my', { username }));
@@ -74,6 +75,7 @@ const checkUsernameRegisterOrder = async (username) => {
         return false;
     }
 };
+exports.checkUsernameRegisterOrder = checkUsernameRegisterOrder;
 async function saveKeystore(privateKey, username) {
     let passwordInput = await (0, prompts_1.password)({
         message: 'Enter a password to encrypt your private key(>= 6 digits): ',
@@ -253,12 +255,12 @@ const initializeAccount = async (role) => {
     let username = await (0, prompts_1.input)({
         message: '\nEnter a username (1-8 characters, a-z): ',
     });
-    if (await checkUsernameRegisterOrder(username)) {
+    if (await (0, exports.checkUsernameRegisterOrder)(username)) {
         console.log('Username is registering . Please wait for the email or change other username.');
         return;
     }
     while (!validateUsername(username) ||
-        !(await checkUsernameWithBackend(username))) {
+        !(await (0, exports.checkUsernameWithBackend)(username))) {
         console.log('Invalid or already taken username. Please enter a username that is 1-8 characters long, contains only a-z and 1-5, and is not already taken.');
         username = await (0, prompts_1.input)({
             message: 'Enter a username (1-8 characters, a-z, 1-5): ',
