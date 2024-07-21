@@ -60,9 +60,9 @@ const checkUsernameRegisterOrder = async (username) => {
 exports.checkUsernameRegisterOrder = checkUsernameRegisterOrder;
 async function saveKeystore(privateKey, username) {
     let passwordInput = await (0, prompts_1.password)({
-        message: 'Enter a password to encrypt your private key(>= 6 digits): ',
+        message: 'Account imported successfully. Set a password to encrypt the private key (at least 6 characters): ',
         mask: '*',
-        validate: (input) => input.length >= 6 || 'Password must be at least 6 characters long.',
+        validate: (input) => input.length >= 6 || 'Password must be at least 6 characters.',
     });
     let passwordConfirmInput = await (0, prompts_1.password)({
         message: 'Confirm your password: ',
@@ -92,10 +92,17 @@ async function saveKeystore(privateKey, username) {
 }
 async function generateKeystore(username) {
     const mnemonic = (0, bip39_1.generateMnemonic)(english_1.wordlist);
-    console.log(`Your mnemonic phrase: \n`);
+    console.log(`Your Seed Phrase: \n`);
     console.log(`${(0, utils_1.cmdGreenFont)(mnemonic)}\n`);
     await (0, prompts_1.input)({
-        message: 'Press [Enter] button after you have saved your mnemonic phrase.',
+        message: "Please confirm that you have backed up and saved the seed phrase (input 'Yes' after you have saved the seed phrase):",
+        validate: (input) => {
+            if (input.toLowerCase() === 'yes')
+                return true;
+            else {
+                return 'Please input “yes” to continue.';
+            }
+        },
     });
     const seed = (0, bip39_1.mnemonicToSeedSync)(mnemonic);
     const master = hdkey_1.default.fromMasterSeed(Buffer.from(seed));
@@ -129,7 +136,7 @@ const importFromMnemonic = async () => {
     try {
         await (0, utils_1.retryRequest)(async () => {
             const mnemonic = await (0, prompts_1.input)({
-                message: 'Enter your mnemonic phrase (12 words):',
+                message: 'Enter Your Seed Phrase (12 words):',
             });
             const seed = (0, bip39_1.mnemonicToSeedSync)(mnemonic.trim());
             const master = hdkey_1.default.fromMasterSeed(Buffer.from(seed));
@@ -141,7 +148,7 @@ const importFromMnemonic = async () => {
         }, 3);
     }
     catch (error) {
-        console.log('Mnemonic phrase not available');
+        console.log('Seed Phrase not available');
     }
 };
 exports.importFromMnemonic = importFromMnemonic;

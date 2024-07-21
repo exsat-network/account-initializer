@@ -9,14 +9,14 @@ const constants_1 = require("./constants");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const prompts_1 = require("@inquirer/prompts");
-const tempFilePath = path_1.default.join(__dirname, "keystore_path.tmp");
+const tempFilePath = path_1.default.join(__dirname, 'keystore_path.tmp');
 const saveSelectedPath = (selectedPath) => {
     fs_extra_1.default.writeFileSync(tempFilePath, selectedPath);
 };
 exports.saveSelectedPath = saveSelectedPath;
 const readSelectedPath = () => {
     if (fs_extra_1.default.existsSync(tempFilePath)) {
-        return fs_extra_1.default.readFileSync(tempFilePath, "utf8");
+        return fs_extra_1.default.readFileSync(tempFilePath, 'utf8');
     }
     return null;
 };
@@ -31,8 +31,8 @@ exports.axiosInstance = axios_1.default.create({
     baseURL: constants_1.API_URL,
     timeout: 10000,
     headers: {
-        "x-api-key": constants_1.API_SECRET,
-        "Content-Type": "application/json",
+        'x-api-key': constants_1.API_SECRET,
+        'Content-Type': 'application/json',
     },
 });
 const retryRequest = async (fn, retries = 3) => {
@@ -51,8 +51,8 @@ exports.retryRequest = retryRequest;
 const listDirectories = async (currentPath) => {
     const files = await fs_extra_1.default.readdir(currentPath);
     const directories = files.filter((file) => fs_extra_1.default.statSync(path_1.default.join(currentPath, file)).isDirectory());
-    directories.unshift(".."); // Add parent directory option
-    directories.unshift("."); // Add current directory option
+    directories.unshift('..'); // Add parent directory option
+    directories.unshift('.'); // Add current directory option
     return directories;
 };
 exports.listDirectories = listDirectories;
@@ -60,31 +60,37 @@ const validatePath = (inputPath) => {
     return fs_extra_1.default.existsSync(inputPath) && fs_extra_1.default.statSync(inputPath).isDirectory();
 };
 const selectDirPrompt = async () => {
+    const rootPath = path_1.default.resolve('.');
     const initialChoice = await (0, prompts_1.select)({
-        message: "\nChoose a directory to save the keystore:",
+        message: '\nChoose a directory to save the keystore:',
         choices: [
-            { name: "Navigate To Select", value: "1" },
-            { name: "Manually Enter a directory path", value: "2" },
+            { name: 'Navigate To Select', value: '1' },
+            { name: `Client Root Directory(path:${rootPath})`, value: '2' },
+            { name: 'Manually Enter a Directory Path', value: '3' },
         ],
     });
-    if (initialChoice === "2") {
+    if (initialChoice === '3') {
         while (true) {
             const manualPath = await (0, prompts_1.input)({
-                message: "Please enter the directory path: ",
+                message: 'Please enter the directory path: ',
                 validate: (input) => {
                     if (validatePath(input)) {
                         return true;
                     }
-                    return "Invalid directory path. Please try again.";
+                    return 'Invalid directory path. Please try again.';
                 },
             });
             (0, exports.saveSelectedPath)(manualPath);
             return manualPath;
         }
     }
-    else if (initialChoice === "1") {
-        let currentPath = ".";
-        let selectedPath = "";
+    else if (initialChoice === '2') {
+        (0, exports.saveSelectedPath)(rootPath);
+        return rootPath;
+    }
+    else if (initialChoice === '1') {
+        let currentPath = '.';
+        let selectedPath = '';
         let finalSelection = false;
         while (!finalSelection) {
             const directories = await (0, exports.listDirectories)(currentPath);
@@ -96,17 +102,17 @@ const selectDirPrompt = async () => {
                 })),
             });
             const directory = directories[index];
-            if (directory === "..") {
-                currentPath = path_1.default.resolve(currentPath, "..");
+            if (directory === '..') {
+                currentPath = path_1.default.resolve(currentPath, '..');
             }
-            else if (directory === ".") {
+            else if (directory === '.') {
                 currentPath = path_1.default.resolve(currentPath);
             }
             else {
                 currentPath = path_1.default.resolve(currentPath, directory);
             }
             const finalize = await (0, prompts_1.confirm)({
-                message: "Do you want to finalize this directory selection? (Y/N): ",
+                message: 'Do you want to finalize this directory selection? (Y/N): ',
             });
             if (finalize) {
                 finalSelection = true;
@@ -115,10 +121,6 @@ const selectDirPrompt = async () => {
         }
         (0, exports.saveSelectedPath)(selectedPath);
         return selectedPath;
-    }
-    else {
-        console.log('Invalid choice. Please restart and enter "1" or "2".');
-        process.exit(1);
     }
 };
 exports.selectDirPrompt = selectDirPrompt;

@@ -123,10 +123,17 @@ async function saveKeystore(privateKey: PrivateKey, username: string) {
 
 async function generateKeystore(username) {
   const mnemonic = generateMnemonic(wordlist);
-  console.log(`Your mnemonic phrase: \n`);
+  console.log(`Your Seed Phrase: \n`);
   console.log(`${cmdGreenFont(mnemonic)}\n`);
   await input({
-    message: 'Press [Enter] button after you have saved your mnemonic phrase.',
+    message:
+      "Please confirm that you have backed up and saved the seed phrase (input 'Yes' after you have saved the seed phrase):",
+    validate: (input) => {
+      if (input.toLowerCase() === 'yes') return true;
+      else {
+        return 'Please input “yes” to continue.';
+      }
+    },
   });
 
   const seed = mnemonicToSeedSync(mnemonic);
@@ -169,7 +176,7 @@ export const importFromMnemonic = async () => {
   try {
     await retryRequest(async () => {
       const mnemonic = await input({
-        message: 'Enter your mnemonic phrase (12 words):',
+        message: 'Enter Your Seed Phrase (12 words):',
       });
 
       const seed = mnemonicToSeedSync(mnemonic.trim());
@@ -185,7 +192,7 @@ export const importFromMnemonic = async () => {
       await saveKeystore(privateKey, username);
     }, 3);
   } catch (error) {
-    console.log('Mnemonic phrase not available');
+    console.log('Seed Phrase not available');
   }
 };
 export const importFromPrivateKey = async () => {
