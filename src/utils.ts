@@ -1,10 +1,10 @@
-import axios from "axios";
-import { API_URL, API_SECRET } from "./constants";
-import fs from "fs-extra";
-import path from "path";
+import axios from 'axios';
+import { API_URL, API_SECRET } from './constants';
+import fs from 'fs-extra';
+import path from 'path';
 import { select, input, confirm } from '@inquirer/prompts';
 
-const tempFilePath = path.join(__dirname, "keystore_path.tmp");
+const tempFilePath = path.join(__dirname, 'keystore_path.tmp');
 
 export const saveSelectedPath = (selectedPath: string) => {
   fs.writeFileSync(tempFilePath, selectedPath);
@@ -12,7 +12,7 @@ export const saveSelectedPath = (selectedPath: string) => {
 
 export const readSelectedPath = (): string | null => {
   if (fs.existsSync(tempFilePath)) {
-    return fs.readFileSync(tempFilePath, "utf8");
+    return fs.readFileSync(tempFilePath, 'utf8');
   }
   return null;
 };
@@ -27,14 +27,14 @@ export const axiosInstance = axios.create({
   baseURL: API_URL,
   timeout: 10000, // 10 seconds timeout
   headers: {
-    "x-api-key": API_SECRET,
-    "Content-Type": "application/json",
+    'x-api-key': API_SECRET,
+    'Content-Type': 'application/json',
   },
 });
 
 export const retryRequest = async (
-    fn: () => Promise<any>,
-    retries = 3
+  fn: () => Promise<any>,
+  retries = 3,
 ): Promise<any> => {
   for (let i = 0; i < retries; i++) {
     try {
@@ -49,10 +49,10 @@ export const retryRequest = async (
 export const listDirectories = async (currentPath: string) => {
   const files = await fs.readdir(currentPath);
   const directories = files.filter((file) =>
-      fs.statSync(path.join(currentPath, file)).isDirectory()
+    fs.statSync(path.join(currentPath, file)).isDirectory(),
   );
-  directories.unshift(".."); // Add parent directory option
-  directories.unshift("."); // Add current directory option
+  directories.unshift('..'); // Add parent directory option
+  directories.unshift('.'); // Add current directory option
   return directories;
 };
 
@@ -61,31 +61,36 @@ const validatePath = (inputPath: string): boolean => {
 };
 
 export const selectDirPrompt = async () => {
+  const rootPath = path.resolve('.');
   const initialChoice = await select({
-    message: "\nChoose a directory to save the keystore:",
+    message: '\nChoose a directory to save the keystore:',
     choices: [
-      { name: "Navigate To Select", value: "1" },
-      { name: "Manually Enter a directory path", value: "2" },
+      { name: 'Navigate To Select', value: '1' },
+      { name: `Client Root Directory(path:${rootPath})`, value: '2' },
+      { name: 'Manually Enter a Directory Path', value: '3' },
     ],
   });
 
-  if (initialChoice === "2") {
+  if (initialChoice === '3') {
     while (true) {
       const manualPath = await input({
-        message: "Please enter the directory path: ",
+        message: 'Please enter the directory path: ',
         validate: (input) => {
           if (validatePath(input)) {
             return true;
           }
-          return "Invalid directory path. Please try again.";
+          return 'Invalid directory path. Please try again.';
         },
       });
       saveSelectedPath(manualPath);
       return manualPath;
     }
-  } else if (initialChoice === "1") {
-    let currentPath = ".";
-    let selectedPath = "";
+  } else if (initialChoice === '2') {
+    saveSelectedPath(rootPath);
+    return rootPath;
+  } else if (initialChoice === '1') {
+    let currentPath = '.';
+    let selectedPath = '';
     let finalSelection = false;
 
     while (!finalSelection) {
@@ -101,16 +106,16 @@ export const selectDirPrompt = async () => {
 
       const directory = directories[index];
 
-      if (directory === "..") {
-        currentPath = path.resolve(currentPath, "..");
-      } else if (directory === ".") {
+      if (directory === '..') {
+        currentPath = path.resolve(currentPath, '..');
+      } else if (directory === '.') {
         currentPath = path.resolve(currentPath);
       } else {
         currentPath = path.resolve(currentPath, directory);
       }
 
       const finalize = await confirm({
-        message: "Do you want to finalize this directory selection? (Y/N): ",
+        message: 'Do you want to finalize this directory selection? (Y/N): ',
       });
 
       if (finalize) {
@@ -121,9 +126,6 @@ export const selectDirPrompt = async () => {
 
     saveSelectedPath(selectedPath);
     return selectedPath;
-  } else {
-    console.log('Invalid choice. Please restart and enter "1" or "2".');
-    process.exit(1);
   }
 };
 
