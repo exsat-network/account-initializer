@@ -3,11 +3,11 @@ export declare const API_URL: string;
 export declare const API_SECRET: string;
 export declare const EXSAT_RPC_URLS: any;
 export type HexString = string;
-export type Cipher = "aes-128-ctr" | "aes-128-cbc" | "aes-256-cbc";
+export type Cipher = 'aes-128-ctr' | 'aes-128-cbc' | 'aes-256-cbc';
 export type CipherOptions = {
     salt?: Uint8Array | string;
     iv?: Uint8Array | string;
-    kdf?: "scrypt" | "pbkdf2";
+    kdf?: 'scrypt' | 'pbkdf2';
     dklen?: number;
     c?: number;
     n?: number;
@@ -31,7 +31,7 @@ export type ScryptParams = {
 export type PBKDF2SHA256Params = {
     c: number;
     dklen: number;
-    prf: "hmac-sha256";
+    prf: 'hmac-sha256';
     salt: Uint8Array | string;
 };
 export type KeyStore = {
@@ -41,7 +41,7 @@ export type KeyStore = {
         cipherparams: {
             iv: string;
         };
-        kdf: "pbkdf2" | "scrypt";
+        kdf: 'pbkdf2' | 'scrypt';
         kdfparams: ScryptParams | PBKDF2SHA256Params;
         mac: HexString;
     };

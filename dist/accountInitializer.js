@@ -114,7 +114,17 @@ async function generateKeystore(username) {
     return { privateKey, publicKey, username };
 }
 async function getAccountName(privateKey) {
-    const apiUrl = constants_1.EXSAT_RPC_URLS[0] + `/v1/chain/get_account`;
+    let baseUrl;
+    if (constants_1.EXSAT_RPC_URLS && constants_1.EXSAT_RPC_URLS.length > 0) {
+        baseUrl = constants_1.EXSAT_RPC_URLS[0];
+    }
+    else {
+        const response = await utils_1.axiosInstance.get('/api/config/exsat_config');
+        if (response.data.status == 'success') {
+            baseUrl = response.data.info.exsat_rpc[0];
+        }
+    }
+    const apiUrl = baseUrl + `/v1/chain/get_account`;
     return await (0, utils_1.retryRequest)(async () => {
         const accountName = await (0, prompts_1.input)({
             message: 'Enter your account name (1-8 characters):',
