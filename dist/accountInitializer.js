@@ -87,6 +87,7 @@ async function saveKeystore(privateKey, username) {
     // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
     const selectedPath = await (0, utils_1.selectDirPrompt)();
     (0, fs_1.writeFileSync)(`${selectedPath}/${username}_keystore.json`, JSON.stringify(keystore));
+    (0, utils_1.updateEnvFile)({ KEYSTORE_FILE: `${selectedPath}/${username}_keystore.json` });
     console.log(`\n${(0, utils_1.cmdRedFont)('!!!Remember to backup this file!!!')}\n`);
     console.log(`\n${(0, utils_1.cmdGreenFont)(`Saved Successed: ${selectedPath}/${username}_keystore.json`)}\n`);
 }
@@ -104,6 +105,7 @@ async function generateKeystore(username) {
             }
         },
     });
+    (0, utils_1.clearLines)(5);
     const seed = (0, bip39_1.mnemonicToSeedSync)(mnemonic);
     const master = hdkey_1.default.fromMasterSeed(Buffer.from(seed));
     const node = master.derive("m/44'/194'/0'/0/0");
@@ -145,13 +147,14 @@ async function getAccountName(privateKey) {
 const importFromMnemonic = async () => {
     try {
         await (0, utils_1.retryRequest)(async () => {
-            const mnemonic = await (0, prompts_1.input)({
-                message: 'Enter Your Seed Phrase (12 words):',
-            });
+            const mnemonic = await (0, utils_1.inputWithCancel)('Enter Your Seed Phrase (12 words,Input "q" to return):');
+            if (!mnemonic)
+                return false;
             const seed = (0, bip39_1.mnemonicToSeedSync)(mnemonic.trim());
             const master = hdkey_1.default.fromMasterSeed(Buffer.from(seed));
             const node = master.derive("m/44'/194'/0'/0/0");
             const privateKey = antelope_1.PrivateKey.from(wif_1.default.encode(128, node.privateKey, false).toString());
+            (0, utils_1.clearLines)(2);
             console.log('keystore generation successful.\n');
             const username = await getAccountName(privateKey);
             await saveKeystore(privateKey, username);
@@ -165,9 +168,9 @@ exports.importFromMnemonic = importFromMnemonic;
 const importFromPrivateKey = async () => {
     try {
         await (0, utils_1.retryRequest)(async () => {
-            const privateKeyInput = await (0, prompts_1.input)({
-                message: 'Enter your private key (64 characters):',
-            });
+            const privateKeyInput = await (0, utils_1.inputWithCancel)('Enter your private key (64 characters,Input "q" to return):');
+            if (!privateKeyInput)
+                return false;
             const privateKey = antelope_1.PrivateKey.from(privateKeyInput);
             console.log('keystore generation successful.\n');
             const username = await getAccountName(privateKey);

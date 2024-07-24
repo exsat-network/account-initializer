@@ -6,11 +6,14 @@ import { writeFileSync, readdirSync } from 'fs';
 import qrcode from 'qrcode-terminal';
 import {
   axiosInstance,
+  clearLines,
   cmdGreenFont,
   cmdRedFont,
+  inputWithCancel,
   readSelectedPath,
   retryRequest,
   selectDirPrompt,
+  updateEnvFile,
 } from './utils';
 import { createKeystore } from './web3';
 import WIF from 'wif';
@@ -112,6 +115,7 @@ async function saveKeystore(privateKey: PrivateKey, username: string) {
     `${selectedPath}/${username}_keystore.json`,
     JSON.stringify(keystore),
   );
+  updateEnvFile({ KEYSTORE_FILE: `${selectedPath}/${username}_keystore.json` });
 
   console.log(`\n${cmdRedFont('!!!Remember to backup this file!!!')}\n`);
   console.log(
@@ -135,6 +139,7 @@ async function generateKeystore(username) {
       }
     },
   });
+  clearLines(5);
 
   const seed = mnemonicToSeedSync(mnemonic);
   const master = HDKey.fromMasterSeed(Buffer.from(seed));
@@ -184,10 +189,10 @@ async function getAccountName(privateKey: PrivateKey) {
 export const importFromMnemonic = async () => {
   try {
     await retryRequest(async () => {
-      const mnemonic = await input({
-        message: 'Enter Your Seed Phrase (12 words):',
-      });
-
+      const mnemonic = await inputWithCancel(
+        'Enter Your Seed Phrase (12 words,Input "q" to return):',
+      );
+      if (!mnemonic) return false;
       const seed = mnemonicToSeedSync(mnemonic.trim());
       const master = HDKey.fromMasterSeed(Buffer.from(seed));
       const node = master.derive("m/44'/194'/0'/0/0");
@@ -195,7 +200,7 @@ export const importFromMnemonic = async () => {
       const privateKey = PrivateKey.from(
         WIF.encode(128, node.privateKey, false).toString(),
       );
-
+      clearLines(2);
       console.log('keystore generation successful.\n');
       const username = await getAccountName(privateKey);
       await saveKeystore(privateKey, username);
@@ -207,9 +212,10 @@ export const importFromMnemonic = async () => {
 export const importFromPrivateKey = async () => {
   try {
     await retryRequest(async () => {
-      const privateKeyInput = await input({
-        message: 'Enter your private key (64 characters):',
-      });
+      const privateKeyInput = await inputWithCancel(
+        'Enter your private key (64 characters,Input "q" to return):',
+      );
+      if (!privateKeyInput) return false;
       const privateKey = PrivateKey.from(privateKeyInput);
       console.log('keystore generation successful.\n');
       const username = await getAccountName(privateKey);

@@ -1,14 +1,38 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.selectDirPrompt = exports.listDirectories = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = void 0;
+exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.selectDirPrompt = exports.listDirectories = exports.inputWithCancel = exports.updateEnvFile = exports.clearLines = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = void 0;
 const axios_1 = __importDefault(require("axios"));
 const constants_1 = require("./constants");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const prompts_1 = require("@inquirer/prompts");
+const dotenv = __importStar(require("dotenv"));
 const tempFilePath = path_1.default.join(__dirname, 'keystore_path.tmp');
 const saveSelectedPath = (selectedPath) => {
     fs_extra_1.default.writeFileSync(tempFilePath, selectedPath);
@@ -48,6 +72,67 @@ const retryRequest = async (fn, retries = 3) => {
     }
 };
 exports.retryRequest = retryRequest;
+function clearLines(numLines) {
+    for (let i = 0; i < numLines; i++) {
+        process.stdout.write('\x1B[2K'); // Clear current line
+        process.stdout.write('\x1B[1A'); // Move cursor up one line
+    }
+    process.stdout.write('\x1B[2K'); // Clear current line
+}
+exports.clearLines = clearLines;
+function updateEnvFile(values) {
+    const envFilePath = '.env';
+    if (!fs_extra_1.default.existsSync(envFilePath)) {
+        fs_extra_1.default.writeFileSync(envFilePath, '');
+    }
+    const envConfig = dotenv.parse(fs_extra_1.default.readFileSync(envFilePath));
+    Object.keys(values).forEach((key) => {
+        envConfig[key] = values[key];
+    });
+    // Read original .env file contents
+    const originalEnvContent = fs_extra_1.default.readFileSync(envFilePath, 'utf-8');
+    // Parse original .env file contents
+    const parsedEnv = dotenv.parse(originalEnvContent);
+    // Build updated .env file contents, preserving comments and structure
+    const updatedLines = originalEnvContent.split('\n').map((line) => {
+        const [key] = line.split('=');
+        if (key && envConfig[key.trim()]) {
+            return `${key}=${envConfig[key.trim()]}`;
+        }
+        return line;
+    });
+    // Check if any new key-value pairs need to be added to the end of the file
+    Object.keys(envConfig).forEach((key) => {
+        if (!parsedEnv.hasOwnProperty(key)) {
+            updatedLines.push(`${key}=${envConfig[key]}`);
+        }
+    });
+    // Concatenate updated content into string
+    const updatedEnvContent = updatedLines.join('\n');
+    // Write back the updated .env file contents
+    fs_extra_1.default.writeFileSync(envFilePath, updatedEnvContent);
+    return true;
+}
+exports.updateEnvFile = updateEnvFile;
+async function inputWithCancel(message, validatefn) {
+    const value = await (0, prompts_1.input)({
+        message: message,
+        validate: (input) => {
+            if (input.toLowerCase() === 'q') {
+                return true;
+            }
+            if (typeof validatefn === 'function') {
+                return validatefn(input);
+            }
+            return true;
+        },
+    });
+    if (value.toLowerCase() === 'q') {
+        return false;
+    }
+    return value;
+}
+exports.inputWithCancel = inputWithCancel;
 const listDirectories = async (currentPath) => {
     const files = await fs_extra_1.default.readdir(currentPath);
     const directories = files.filter((file) => fs_extra_1.default.statSync(path_1.default.join(currentPath, file)).isDirectory());

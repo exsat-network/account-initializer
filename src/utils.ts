@@ -3,6 +3,7 @@ import { API_URL, API_SECRET } from './constants';
 import fs from 'fs-extra';
 import path from 'path';
 import { select, input, confirm } from '@inquirer/prompts';
+import * as dotenv from 'dotenv';
 
 const tempFilePath = path.join(__dirname, 'keystore_path.tmp');
 
@@ -45,6 +46,74 @@ export const retryRequest = async (
     }
   }
 };
+
+export function clearLines(numLines: number) {
+  for (let i = 0; i < numLines; i++) {
+    process.stdout.write('\x1B[2K'); // Clear current line
+    process.stdout.write('\x1B[1A'); // Move cursor up one line
+  }
+  process.stdout.write('\x1B[2K'); // Clear current line
+}
+
+export function updateEnvFile(values) {
+  const envFilePath = '.env';
+  if (!fs.existsSync(envFilePath)) {
+    fs.writeFileSync(envFilePath, '');
+  }
+  const envConfig = dotenv.parse(fs.readFileSync(envFilePath));
+  Object.keys(values).forEach((key) => {
+    envConfig[key] = values[key];
+  });
+  // Read original .env file contents
+  const originalEnvContent = fs.readFileSync(envFilePath, 'utf-8');
+
+  // Parse original .env file contents
+  const parsedEnv = dotenv.parse(originalEnvContent);
+
+  // Build updated .env file contents, preserving comments and structure
+  const updatedLines = originalEnvContent.split('\n').map((line) => {
+    const [key] = line.split('=');
+    if (key && envConfig[key.trim()]) {
+      return `${key}=${envConfig[key.trim()]}`;
+    }
+    return line;
+  });
+
+  // Check if any new key-value pairs need to be added to the end of the file
+  Object.keys(envConfig).forEach((key) => {
+    if (!parsedEnv.hasOwnProperty(key)) {
+      updatedLines.push(`${key}=${envConfig[key]}`);
+    }
+  });
+  // Concatenate updated content into string
+  const updatedEnvContent = updatedLines.join('\n');
+  // Write back the updated .env file contents
+  fs.writeFileSync(envFilePath, updatedEnvContent);
+
+  return true;
+}
+
+export async function inputWithCancel(
+  message: string,
+  validatefn?: (value: string) => boolean | string | Promise<string | boolean>,
+) {
+  const value = await input({
+    message: message,
+    validate: (input) => {
+      if (input.toLowerCase() === 'q') {
+        return true;
+      }
+      if (typeof validatefn === 'function') {
+        return validatefn(input);
+      }
+      return true;
+    },
+  });
+  if (value.toLowerCase() === 'q') {
+    return false;
+  }
+  return value;
+}
 
 export const listDirectories = async (currentPath: string) => {
   const files = await fs.readdir(currentPath);

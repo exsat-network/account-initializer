@@ -82,13 +82,6 @@ To set up a mock server using `express`, follow these steps:
     yarn add express body-parser
     ```
 
-2. **Run the `server.ts` file in the `mock-server` folder**:
-
-  To run the server, use the following command:
-  ```sh
-  yarn run test-server
-  ```
-
 ## Directory Structure
 ```sh
 .
