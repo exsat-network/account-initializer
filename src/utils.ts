@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { select, input, confirm } from '@inquirer/prompts';
 import * as dotenv from 'dotenv';
+import { promisify } from 'node:util';
 
 const tempFilePath = path.join(__dirname, 'keystore_path.tmp');
 
@@ -128,6 +129,29 @@ export const listDirectories = async (currentPath: string) => {
 const validatePath = (inputPath: string): boolean => {
   return fs.existsSync(inputPath) && fs.statSync(inputPath).isDirectory();
 };
+const access = promisify(fs.access);
+const mkdir = promisify(fs.mkdir);
+async function checkAndCreatePath(directoryPath: string): Promise<void> {
+  const parentDir = path.dirname(directoryPath);
+
+  if (fs.existsSync(directoryPath)) {
+    return; // Directory already exists
+  }
+  if (directoryPath === parentDir) {
+    // Reached the root directory, stop recursion
+    throw new Error('Cannot create directory at the root level.');
+  }
+  if (!fs.existsSync(parentDir)) {
+    // Recursively check and create the parent directory
+    await checkAndCreatePath(parentDir);
+  }
+
+  // Check if we have permission to create the directory
+  await access(parentDir, fs.constants.W_OK);
+
+  // Create the directory
+  await mkdir(directoryPath);
+}
 
 export const selectDirPrompt = async () => {
   const rootPath = path.resolve('.');
@@ -141,18 +165,29 @@ export const selectDirPrompt = async () => {
   });
 
   if (initialChoice === '3') {
-    while (true) {
-      const manualPath = await input({
-        message: 'Please enter the directory path: ',
-        validate: (input) => {
-          if (validatePath(input)) {
-            return true;
-          }
-          return 'Invalid directory path. Please try again.';
-        },
-      });
-      saveSelectedPath(manualPath);
-      return manualPath;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      try {
+        const manualPath = await input({
+          message: 'Please enter the directory path: ',
+        });
+
+        await checkAndCreatePath(manualPath);
+        saveSelectedPath(manualPath);
+        return manualPath;
+      } catch (error) {
+        attempts++;
+        if (attempts < maxAttempts) {
+          console.log(
+            'Invalid directory path or insufficient permissions. Please try again.',
+          );
+        } else {
+          console.log('Maximum retry attempts reached. Exiting.');
+          throw error;
+        }
+      }
     }
   } else if (initialChoice === '2') {
     saveSelectedPath(rootPath);
