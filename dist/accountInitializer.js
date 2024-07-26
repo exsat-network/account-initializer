@@ -9,12 +9,12 @@ const english_1 = require("@scure/bip39/wordlists/english");
 const hdkey_1 = __importDefault(require("hdkey"));
 const antelope_1 = require("@wharfkit/antelope");
 const fs_1 = require("fs");
-const qrcode_terminal_1 = __importDefault(require("qrcode-terminal"));
 const utils_1 = require("./utils");
 const web3_1 = require("./web3");
 const wif_1 = __importDefault(require("wif"));
 const web3_utils_1 = require("web3-utils");
 const prompts_1 = require("@inquirer/prompts");
+const btcResource_1 = require("./btcResource");
 const validateUsername = (username) => {
     const regex = /^[a-z1-5]{1,8}$/;
     return regex.test(username);
@@ -200,7 +200,7 @@ async function processAccount({ accountName, pubkey, status, btcAddress, amount,
         });
     }
     const actions = {
-        recharge_btc: async () => await chargeForRegistry(accountName, btcAddress, amount),
+        recharge_btc: async () => await (0, btcResource_1.chargeForRegistry)(accountName, btcAddress, amount),
     };
     let action;
     do {
@@ -214,34 +214,6 @@ async function processAccount({ accountName, pubkey, status, btcAddress, amount,
     } while (action !== '99');
 }
 exports.processAccount = processAccount;
-async function chargeForRegistry(username, btcAddress, amount) {
-    console.log(`Please send ${amount} BTC to the following address:`);
-    qrcode_terminal_1.default.generate(btcAddress, { small: true });
-    console.log(btcAddress);
-    const response3 = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.get('/api/config/exsat_config'));
-    console.log(`\nNetwork:${response3.data.info.btc_network}`);
-    const txid = await (0, prompts_1.input)({
-        message: `Enter the transaction ID after sending BTC: `,
-        validate: (input) => {
-            if (input.length > 64) {
-                return 'Invalid transaction ID.';
-            }
-            return true;
-        },
-    });
-    const response2 = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/users/submit-payment', {
-        txid,
-        amount,
-        username,
-    }));
-    if (response2.data.status === 'success') {
-        console.log(response2.data.message);
-    }
-    else {
-        console.log('Payment not confirmed.');
-        return;
-    }
-}
 const initializeAccount = async (role) => {
     const keystoreFile = (0, utils_1.keystoreExist)();
     if (keystoreFile) {
@@ -333,7 +305,7 @@ const initializeAccount = async (role) => {
             commissionRate: commissionRate ? Number(commissionRate) : 0,
         }));
         const { btcAddress, amount } = response.data.info;
-        await chargeForRegistry(username, btcAddress, amount);
+        await (0, btcResource_1.chargeForRegistry)(username, btcAddress, amount);
     }
     catch (error) {
         if (error instanceof Error) {

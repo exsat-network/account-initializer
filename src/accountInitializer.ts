@@ -19,7 +19,7 @@ import { createKeystore } from './web3';
 import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
 import { input, select, password } from '@inquirer/prompts';
-import { chargeBtcForResource } from './btcResource';
+import {chargeBtcForResource, chargeForRegistry} from './btcResource';
 
 const validateUsername = (username: string): boolean => {
   const regex = /^[a-z1-5]{1,8}$/;
@@ -264,41 +264,6 @@ export async function processAccount({
     }
   } while (action !== '99');
 }
-async function chargeForRegistry(username, btcAddress, amount) {
-  console.log(`Please send ${amount} BTC to the following address:`);
-  qrcode.generate(btcAddress, { small: true });
-  console.log(btcAddress);
-
-  const response3 = await retryRequest(() =>
-    axiosInstance.get('/api/config/exsat_config'),
-  );
-  console.log(`\nNetwork:${response3.data.info.btc_network}`);
-  const txid = await input({
-    message: `Enter the transaction ID after sending BTC: `,
-    validate: (input: string) => {
-      if (input.length > 64) {
-        return 'Invalid transaction ID.';
-      }
-      return true;
-    },
-  });
-
-  const response2 = await retryRequest(() =>
-    axiosInstance.post('/api/users/submit-payment', {
-      txid,
-      amount,
-      username,
-    }),
-  );
-
-  if (response2.data.status === 'success') {
-    console.log(response2.data.message);
-  } else {
-    console.log('Payment not confirmed.');
-    return;
-  }
-}
-
 export const initializeAccount = async (role?) => {
   const keystoreFile = keystoreExist();
   if (keystoreFile) {

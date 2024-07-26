@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.chargeBtcForResource = void 0;
+exports.chargeForRegistry = exports.chargeBtcForResource = void 0;
 const utils_1 = require("./utils");
 const constants_1 = require("./constants");
 const qrcode_terminal_1 = __importDefault(require("qrcode-terminal"));
@@ -77,3 +77,32 @@ const chargeBtcForResource = async (encFile) => {
     }
 };
 exports.chargeBtcForResource = chargeBtcForResource;
+async function chargeForRegistry(username, btcAddress, amount) {
+    console.log(`Please send ${amount} BTC to the following address:`);
+    qrcode_terminal_1.default.generate(btcAddress, { small: true });
+    console.log(btcAddress);
+    const response3 = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.get('/api/config/exsat_config'));
+    console.log(`\nNetwork:${response3.data.info.btc_network}`);
+    const txid = await (0, prompts_1.input)({
+        message: `Enter the transaction ID after sending BTC: `,
+        validate: (input) => {
+            if (input.length > 64) {
+                return 'Invalid transaction ID.';
+            }
+            return true;
+        },
+    });
+    const response2 = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/users/submit-payment', {
+        txid,
+        amount,
+        username,
+    }));
+    if (response2.data.status === 'success') {
+        console.log(response2.data.message);
+    }
+    else {
+        console.log('Payment not confirmed.');
+        return;
+    }
+}
+exports.chargeForRegistry = chargeForRegistry;

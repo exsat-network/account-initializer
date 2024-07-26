@@ -5,7 +5,7 @@ export {
   importFromPrivateKey,
   initializeAccount,
   processAccount,
-  checkUsernameWithBackend
+  checkUsernameWithBackend,
 } from './accountInitializer';
 export { queryAccount } from './query';
-export { chargeBtcForResource } from './btcResource';
+export { chargeBtcForResource,chargeForRegistry } from './btcResource';

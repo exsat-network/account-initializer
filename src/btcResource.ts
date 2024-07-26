@@ -1,8 +1,4 @@
-import {
-  axiosInstance,
-  keystoreExist,
-  retryRequest,
-} from './utils';
+import { axiosInstance, keystoreExist, retryRequest } from './utils';
 import { MIN_BTC_AMOUNT } from './constants';
 import qrcode from 'qrcode-terminal';
 import { readFileSync } from 'fs';
@@ -91,3 +87,38 @@ export const chargeBtcForResource = async (encFile?) => {
     }
   }
 };
+
+export async function chargeForRegistry(username, btcAddress, amount) {
+  console.log(`Please send ${amount} BTC to the following address:`);
+  qrcode.generate(btcAddress, { small: true });
+  console.log(btcAddress);
+
+  const response3 = await retryRequest(() =>
+    axiosInstance.get('/api/config/exsat_config'),
+  );
+  console.log(`\nNetwork:${response3.data.info.btc_network}`);
+  const txid = await input({
+    message: `Enter the transaction ID after sending BTC: `,
+    validate: (input: string) => {
+      if (input.length > 64) {
+        return 'Invalid transaction ID.';
+      }
+      return true;
+    },
+  });
+
+  const response2 = await retryRequest(() =>
+    axiosInstance.post('/api/users/submit-payment', {
+      txid,
+      amount,
+      username,
+    }),
+  );
+
+  if (response2.data.status === 'success') {
+    console.log(response2.data.message);
+  } else {
+    console.log('Payment not confirmed.');
+    return;
+  }
+}
