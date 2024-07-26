@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.chargeBtcForResource = exports.queryAccount = exports.processAccount = exports.initializeAccount = exports.importFromPrivateKey = exports.importFromMnemonic = exports.decryptKeystore = exports.showMenu = void 0;
+exports.chargeBtcForResource = exports.queryAccount = exports.checkUsernameWithBackend = exports.processAccount = exports.initializeAccount = exports.importFromPrivateKey = exports.importFromMnemonic = exports.decryptKeystore = exports.showMenu = void 0;
 var menu_1 = require("./menu");
 Object.defineProperty(exports, "showMenu", { enumerable: true, get: function () { return menu_1.showMenu; } });
 var web3_1 = require("./web3");
@@ -10,6 +10,7 @@ Object.defineProperty(exports, "importFromMnemonic", { enumerable: true, get: fu
 Object.defineProperty(exports, "importFromPrivateKey", { enumerable: true, get: function () { return accountInitializer_1.importFromPrivateKey; } });
 Object.defineProperty(exports, "initializeAccount", { enumerable: true, get: function () { return accountInitializer_1.initializeAccount; } });
 Object.defineProperty(exports, "processAccount", { enumerable: true, get: function () { return accountInitializer_1.processAccount; } });
+Object.defineProperty(exports, "checkUsernameWithBackend", { enumerable: true, get: function () { return accountInitializer_1.checkUsernameWithBackend; } });
 var query_1 = require("./query");
 Object.defineProperty(exports, "queryAccount", { enumerable: true, get: function () { return query_1.queryAccount; } });
 var btcResource_1 = require("./btcResource");
