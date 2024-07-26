@@ -6,6 +6,18 @@ import { select, input, confirm } from '@inquirer/prompts';
 import * as dotenv from 'dotenv';
 import { promisify } from 'node:util';
 
+export function keystoreExist() {
+  if (process.env.KEYSTORE_FILE && fs.existsSync(process.env.KEYSTORE_FILE)) {
+    return process.env.KEYSTORE_FILE;
+  }
+  const dir = path.resolve(__dirname, '..');
+  const files = fs.readdirSync(dir);
+  for (let i = 0; i < files.length; i++) {
+    if (files[i].endsWith('_keystore.json')) return files[i];
+  }
+  return false;
+}
+
 const tempFilePath = path.join(__dirname, 'keystore_path.tmp');
 
 export const saveSelectedPath = (selectedPath: string) => {
@@ -175,7 +187,6 @@ export const selectDirPrompt = async () => {
         });
 
         await checkAndCreatePath(manualPath);
-        saveSelectedPath(manualPath);
         return manualPath;
       } catch (error) {
         attempts++;
@@ -190,7 +201,6 @@ export const selectDirPrompt = async () => {
       }
     }
   } else if (initialChoice === '2') {
-    saveSelectedPath(rootPath);
     return rootPath;
   } else if (initialChoice === '1') {
     let currentPath = '.';
@@ -228,7 +238,6 @@ export const selectDirPrompt = async () => {
       }
     }
 
-    saveSelectedPath(selectedPath);
     return selectedPath;
   }
 };

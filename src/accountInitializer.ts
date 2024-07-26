@@ -2,7 +2,7 @@ import { generateMnemonic, mnemonicToSeedSync } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import HDKey from 'hdkey';
 import { PrivateKey } from '@wharfkit/antelope';
-import { writeFileSync, readdirSync } from 'fs';
+import { writeFileSync } from 'fs';
 import qrcode from 'qrcode-terminal';
 import {
   axiosInstance,
@@ -10,7 +10,7 @@ import {
   cmdGreenFont,
   cmdRedFont,
   inputWithCancel,
-  readSelectedPath,
+  keystoreExist,
   retryRequest,
   selectDirPrompt,
   updateEnvFile,
@@ -18,8 +18,8 @@ import {
 import { createKeystore } from './web3';
 import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
-import { EXSAT_RPC_URLS } from './constants';
 import { input, select, password } from '@inquirer/prompts';
+import { chargeBtcForResource } from './btcResource';
 
 const validateUsername = (username: string): boolean => {
   const regex = /^[a-z1-5]{1,8}$/;
@@ -30,16 +30,15 @@ const validateEmail = (email: string): boolean => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 };
-
 export const checkUsernameWithBackend = async (
   username: string,
-): Promise<boolean> => {
+): Promise<any> => {
   try {
     const response = await axiosInstance.post('/api/users/check-username', {
       username,
     });
 
-    return response.data.valid;
+    return response.data;
   } catch (error) {
     if (error instanceof Error) {
       console.error('Error checking username with backend:', error.message);
@@ -123,6 +122,7 @@ async function saveKeystore(privateKey: PrivateKey, username: string) {
       `Saved Successed: ${selectedPath}/${username}_keystore.json`,
     )}\n`,
   );
+  return `${selectedPath}/${username}_keystore.json`;
 }
 
 async function generateKeystore(username) {
@@ -156,17 +156,7 @@ async function generateKeystore(username) {
 
   return { privateKey, publicKey, username };
 }
-async function getAccountName(privateKey: PrivateKey) {
-  let baseUrl;
-  if (EXSAT_RPC_URLS && EXSAT_RPC_URLS.length > 0) {
-    baseUrl = EXSAT_RPC_URLS[0];
-  } else {
-    const response = await axiosInstance.get('/api/config/exsat_config');
-    if (response.data.status == 'success') {
-      baseUrl = response.data.info.exsat_rpc[0];
-    }
-  }
-  const apiUrl = baseUrl + `/v1/chain/get_account`;
+async function importAccountAndSaveKeystore(privateKey: PrivateKey) {
   return await retryRequest(async () => {
     const accountName = await input({
       message: 'Enter your account name (1-8 characters):',
@@ -174,90 +164,169 @@ async function getAccountName(privateKey: PrivateKey) {
     const fullAccountName = accountName.endsWith('.sat')
       ? accountName
       : `${accountName}.sat`;
-    const response = await axiosInstance.post(apiUrl, {
-      account_name: fullAccountName,
-    });
+    const accountInfo = await checkUsernameWithBackend(fullAccountName);
 
-    const publicKey = response.data.permissions[0].required_auth.keys[0].key;
-    if (privateKey.toPublic().toLegacyString() === publicKey) {
-      return accountName;
+    if (privateKey.toPublic().toLegacyString() === accountInfo.pubkey) {
+      return { accountName, ...accountInfo };
     }
     throw new Error('Account name is not matched.');
   }, 3);
 }
 
 export const importFromMnemonic = async () => {
+  let accountInfo;
+  let privateKey;
   try {
     await retryRequest(async () => {
-      const mnemonic = await inputWithCancel(
-        'Enter Your Seed Phrase (12 words,Input "q" to return):',
-      );
-      if (!mnemonic) return false;
-      const seed = mnemonicToSeedSync(mnemonic.trim());
-      const master = HDKey.fromMasterSeed(Buffer.from(seed));
-      const node = master.derive("m/44'/194'/0'/0/0");
-
-      const privateKey = PrivateKey.from(
-        WIF.encode(128, node.privateKey, false).toString(),
-      );
-      clearLines(2);
+      const privateKey = await inputMnemonic();
       console.log('keystore generation successful.\n');
-      const username = await getAccountName(privateKey);
-      await saveKeystore(privateKey, username);
+      accountInfo = await importAccountAndSaveKeystore(privateKey);
     }, 3);
   } catch (error) {
     console.log('Seed Phrase not available');
   }
+  const keystoreFile = await saveKeystore(privateKey, accountInfo.accountName);
+  return await processAccount(accountInfo);
 };
+async function inputMnemonic(): Promise<any> {
+  const mnemonic = await inputWithCancel(
+    'Enter Your Seed Phrase (12 words,Input "q" to return):',
+  );
+  if (!mnemonic) return false;
+  const seed = mnemonicToSeedSync(mnemonic.trim());
+  const master = HDKey.fromMasterSeed(Buffer.from(seed));
+  const node = master.derive("m/44'/194'/0'/0/0");
+
+  const privateKey = PrivateKey.from(
+    WIF.encode(128, node.privateKey, false).toString(),
+  );
+  clearLines(2);
+  return privateKey;
+}
 export const importFromPrivateKey = async () => {
+  let account;
+  let privateKey;
   try {
     await retryRequest(async () => {
       const privateKeyInput = await inputWithCancel(
         'Enter your private key (64 characters,Input "q" to return):',
       );
       if (!privateKeyInput) return false;
-      const privateKey = PrivateKey.from(privateKeyInput);
+      privateKey = PrivateKey.from(privateKeyInput);
       console.log('keystore generation successful.\n');
-      const username = await getAccountName(privateKey);
-      await saveKeystore(privateKey, username);
+      account = await importAccountAndSaveKeystore(privateKey);
     }, 3);
   } catch (e) {
     console.log('Private key not available');
+    return;
   }
+  const keystoreFile = await saveKeystore(privateKey, account.accountName);
+  return await processAccount(account);
 };
-
-export const initializeAccount = async (role?) => {
-  const savedPath = readSelectedPath();
-  if (
-    savedPath &&
-    readdirSync(savedPath).some((file) => file.endsWith('_keystore.json'))
-  ) {
-    console.log(`\nAn account has already been created in ${savedPath}.`);
-    return;
-  }
-
-  let username = await input({
-    message: '\nEnter a username (1-8 characters, a-z): ',
-  });
-
-  if (await checkUsernameRegisterOrder(username)) {
-    console.log(
-      'Username is registering . Please wait for the email or change other username.',
-    );
-    return;
-  }
-
-  while (
-    !validateUsername(username) ||
-    !(await checkUsernameWithBackend(username))
-  ) {
-    console.log(
-      'Invalid or already taken username. Please enter a username that is 1-8 characters long, contains only a-z and 1-5, and is not already taken.',
-    );
-    username = await input({
-      message: 'Enter a username (1-8 characters, a-z, 1-5): ',
+export async function processAccount({
+  accountName,
+  pubkey,
+  status,
+  btcAddress,
+  amount,
+}) {
+  const manageMessage = `-----------------------------------------------
+   Account: ${accountName}
+   Public Key: ${pubkey}
+   Account Registration Status: ${status === 'initial' ? 'Unregistered. Please recharge Gas Fee (BTC) to register.' : status === 'charging' ? 'Registering, this may take a moment. Please be patient.' : ''}
+  -----------------------------------------------`;
+  const menus = [
+    {
+      name: 'Return',
+      value: '99',
+      description: 'Return',
+    },
+  ];
+  if (status === 'initial') {
+    menus.unshift({
+      name: 'Recharge BTC',
+      value: 'recharge_btc',
+      description: 'Recharge BTC',
     });
   }
+  const actions: { [key: string]: () => Promise<any> | void } = {
+    recharge_btc: async () =>
+      await chargeForRegistry(accountName, btcAddress, amount),
+  };
+  let action;
+  do {
+    action = await select({
+      message: manageMessage,
+      choices: menus,
+    });
+    if (action !== '99') {
+      await (actions[action] || (() => {}))();
+    }
+  } while (action !== '99');
+}
+async function chargeForRegistry(username, btcAddress, amount) {
+  console.log(`Please send ${amount} BTC to the following address:`);
+  qrcode.generate(btcAddress, { small: true });
+  console.log(btcAddress);
+
+  const response3 = await retryRequest(() =>
+    axiosInstance.get('/api/config/exsat_config'),
+  );
+  console.log(`\nNetwork:${response3.data.info.btc_network}`);
+  const txid = await input({
+    message: `Enter the transaction ID after sending BTC: `,
+    validate: (input: string) => {
+      if (input.length > 64) {
+        return 'Invalid transaction ID.';
+      }
+      return true;
+    },
+  });
+
+  const response2 = await retryRequest(() =>
+    axiosInstance.post('/api/users/submit-payment', {
+      txid,
+      amount,
+      username,
+    }),
+  );
+
+  if (response2.data.status === 'success') {
+    console.log(response2.data.message);
+  } else {
+    console.log('Payment not confirmed.');
+    return;
+  }
+}
+
+export const initializeAccount = async (role?) => {
+  const keystoreFile = keystoreExist();
+  if (keystoreFile) {
+    console.log(`\nAn account has already been created in ${keystoreFile}.`);
+    return;
+  }
+  let registryStatus;
+  const username = await input({
+    message:
+      'Enter a username (1-8 characters, a-z, 1-5.Input "q" to return): ',
+    validate: async (input) => {
+      if (input === 'q') return true;
+      if (!validateUsername(input)) {
+        return 'Please enter a username that is 1-8 characters long, contains only a-z and 1-5.';
+      }
+      const response = await checkUsernameWithBackend(input);
+      registryStatus = response.status;
+      switch (registryStatus) {
+        case 'valid':
+          return true;
+        case 'chain_off':
+          return 'The network query failed. Please try again later or contact the administrator.';
+        default:
+          return 'This username is already registered. Please enter another one.';
+      }
+    },
+  });
+  if (username === 'q') return false;
 
   let email = await input({
     message: '\nEnter your email address(for emergency notify): ',
@@ -329,39 +398,7 @@ export const initializeAccount = async (role?) => {
       }),
     );
     const { btcAddress, amount } = response.data.info;
-
-    console.log(`Please send ${amount} BTC to the following address:`);
-    qrcode.generate(btcAddress, { small: true });
-    console.log(btcAddress);
-
-    const response3 = await retryRequest(() =>
-      axiosInstance.get('/api/config/exsat_config'),
-    );
-    console.log(`\nNetwork:${response3.data.info.btc_network}`);
-    const txid = await input({
-      message: `Enter the transaction ID after sending BTC: `,
-      validate: (input: string) => {
-        if (input.length > 64) {
-          return 'Invalid transaction ID.';
-        }
-        return true;
-      },
-    });
-
-    const response2 = await retryRequest(() =>
-      axiosInstance.post('/api/users/submit-payment', {
-        txid,
-        amount,
-        username,
-      }),
-    );
-
-    if (response2.data.status === 'success') {
-      console.log(response2.data.message);
-    } else {
-      console.log('Payment not confirmed.');
-      return;
-    }
+    await chargeForRegistry(username, btcAddress, amount);
   } catch (error) {
     if (error instanceof Error) {
       console.error('Error creating account:', error.message);

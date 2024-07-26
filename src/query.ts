@@ -1,33 +1,18 @@
 import {
   axiosInstance,
   cmdGreenFont,
-  readSelectedPath,
+  keystoreExist,
   retryRequest,
 } from './utils';
-import { readFileSync, readdirSync } from 'fs';
+import { readFileSync } from 'fs';
 import { decryptKeystore } from './web3';
 import { input, confirm, password } from '@inquirer/prompts';
 
 export const queryAccount = async () => {
   try {
-    let encFile = '';
+    let encFile = keystoreExist();
 
-    const selectedPath = readSelectedPath();
-
-    if (selectedPath) {
-      const files = readdirSync(selectedPath).filter((file) =>
-        file.endsWith('_keystore.json'),
-      );
-
-      if (files.length > 0) {
-        encFile = files[0];
-      } else {
-        const filePath = await input({
-          message: 'Enter the path to your keystore file: ',
-        });
-        encFile = filePath;
-      }
-    } else {
+    if (!encFile) {
       const filePath = await input({
         message: 'Enter the path to your keystore file: ',
       });

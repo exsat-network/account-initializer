@@ -4,6 +4,7 @@ export {
   importFromMnemonic,
   importFromPrivateKey,
   initializeAccount,
+  processAccount,
 } from './accountInitializer';
 export { queryAccount } from './query';
 export { chargeBtcForResource } from './btcResource';

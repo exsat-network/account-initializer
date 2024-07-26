@@ -1,28 +1,18 @@
-import { axiosInstance, readSelectedPath, retryRequest } from './utils';
+import {
+  axiosInstance,
+  keystoreExist,
+  retryRequest,
+} from './utils';
 import { MIN_BTC_AMOUNT } from './constants';
 import qrcode from 'qrcode-terminal';
-import { readFileSync, readdirSync } from 'fs';
+import { readFileSync } from 'fs';
 import { input } from '@inquirer/prompts';
 
 export const chargeBtcForResource = async (encFile?) => {
   try {
     if (!encFile) {
-      const selectedPath = readSelectedPath();
-
-      if (selectedPath) {
-        const files = readdirSync(selectedPath).filter((file) =>
-          file.endsWith('_keystore.json'),
-        );
-
-        if (files.length > 0) {
-          encFile = files[0];
-        } else {
-          const filePath = await input({
-            message: 'Enter the path to your keystore file: ',
-          });
-          encFile = filePath;
-        }
-      } else {
+      encFile = keystoreExist();
+      if (!encFile) {
         const filePath = await input({
           message: 'Enter the path to your keystore file: ',
         });
