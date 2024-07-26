@@ -165,8 +165,7 @@ async function importAccountAndSaveKeystore(privateKey: PrivateKey) {
       ? accountName
       : `${accountName}.sat`;
     const accountInfo = await checkUsernameWithBackend(fullAccountName);
-
-    if (privateKey.toPublic().toLegacyString() === accountInfo.pubkey) {
+    if (privateKey.toPublic().toString() === accountInfo.pubkey) {
       return { accountName, ...accountInfo };
     }
     throw new Error('Account name is not matched.');
@@ -178,7 +177,7 @@ export const importFromMnemonic = async () => {
   let privateKey;
   try {
     await retryRequest(async () => {
-      const privateKey = await inputMnemonic();
+      privateKey = await inputMnemonic();
       console.log('keystore generation successful.\n');
       accountInfo = await importAccountAndSaveKeystore(privateKey);
     }, 3);
