@@ -5,6 +5,7 @@ import path from 'path';
 import { select, input, confirm } from '@inquirer/prompts';
 import * as dotenv from 'dotenv';
 import { promisify } from 'node:util';
+import * as os from 'node:os';
 
 export function keystoreExist() {
   if (process.env.KEYSTORE_FILE && fs.existsSync(process.env.KEYSTORE_FILE)) {
@@ -166,7 +167,7 @@ async function checkAndCreatePath(directoryPath: string): Promise<void> {
 }
 
 export const selectDirPrompt = async () => {
-  const rootPath = path.resolve('.');
+  const rootPath = path.resolve(os.homedir() + '/.exsat');
   const initialChoice = await select({
     message: '\nChoose a directory to save the keystore:',
     choices: [
@@ -201,6 +202,7 @@ export const selectDirPrompt = async () => {
       }
     }
   } else if (initialChoice === '2') {
+    await checkAndCreatePath(rootPath);
     return rootPath;
   } else if (initialChoice === '1') {
     let currentPath = '.';

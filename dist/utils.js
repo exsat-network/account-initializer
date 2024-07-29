@@ -34,6 +34,7 @@ const path_1 = __importDefault(require("path"));
 const prompts_1 = require("@inquirer/prompts");
 const dotenv = __importStar(require("dotenv"));
 const node_util_1 = require("node:util");
+const os = __importStar(require("node:os"));
 function keystoreExist() {
     if (process.env.KEYSTORE_FILE && fs_extra_1.default.existsSync(process.env.KEYSTORE_FILE)) {
         return process.env.KEYSTORE_FILE;
@@ -179,7 +180,7 @@ async function checkAndCreatePath(directoryPath) {
     await mkdir(directoryPath);
 }
 const selectDirPrompt = async () => {
-    const rootPath = path_1.default.resolve('.');
+    const rootPath = path_1.default.resolve(os.homedir() + '/.exsat');
     const initialChoice = await (0, prompts_1.select)({
         message: '\nChoose a directory to save the keystore:',
         choices: [
@@ -212,6 +213,7 @@ const selectDirPrompt = async () => {
         }
     }
     else if (initialChoice === '2') {
+        await checkAndCreatePath(rootPath);
         return rootPath;
     }
     else if (initialChoice === '1') {

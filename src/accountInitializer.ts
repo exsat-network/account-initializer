@@ -73,7 +73,7 @@ export const checkUsernameRegisterOrder = async (
 async function saveKeystore(privateKey: PrivateKey, username: string) {
   let passwordInput = await password({
     message:
-      'Account imported successfully. Set a password to encrypt the private key (at least 6 characters): ',
+      'Set a password to encrypt the private key (at least 6 characters): ',
     mask: '*',
     validate: (input) =>
       input.length >= 6 || 'Password must be at least 6 characters.',
