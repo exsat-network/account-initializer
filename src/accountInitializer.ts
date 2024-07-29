@@ -3,7 +3,6 @@ import { wordlist } from '@scure/bip39/wordlists/english';
 import HDKey from 'hdkey';
 import { PrivateKey } from '@wharfkit/antelope';
 import { writeFileSync } from 'fs';
-import qrcode from 'qrcode-terminal';
 import {
   axiosInstance,
   clearLines,
@@ -19,7 +18,7 @@ import { createKeystore } from './web3';
 import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
 import { input, select, password } from '@inquirer/prompts';
-import {chargeBtcForResource, chargeForRegistry} from './btcResource';
+import { chargeBtcForResource, chargeForRegistry } from './btcResource';
 
 const validateUsername = (username: string): boolean => {
   const regex = /^[a-z1-5]{1,8}$/;
@@ -176,11 +175,14 @@ export const importFromMnemonic = async () => {
   let accountInfo;
   let privateKey;
   try {
-    await retryRequest(async () => {
+    const success = await retryRequest(async () => {
       privateKey = await inputMnemonic();
+      if (!privateKey) return false;
       console.log('keystore generation successful.\n');
       accountInfo = await importAccountAndSaveKeystore(privateKey);
+      return true;
     }, 3);
+    if (!success) return;
   } catch (error) {
     console.log('Seed Phrase not available');
   }
@@ -206,7 +208,7 @@ export const importFromPrivateKey = async () => {
   let account;
   let privateKey;
   try {
-    await retryRequest(async () => {
+    const success = await retryRequest(async () => {
       const privateKeyInput = await inputWithCancel(
         'Enter your private key (64 characters,Input "q" to return):',
       );
@@ -214,7 +216,9 @@ export const importFromPrivateKey = async () => {
       privateKey = PrivateKey.from(privateKeyInput);
       console.log('keystore generation successful.\n');
       account = await importAccountAndSaveKeystore(privateKey);
+      return true;
     }, 3);
+    if (!success) return false;
   } catch (e) {
     console.log('Private key not available');
     return;

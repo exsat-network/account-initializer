@@ -134,11 +134,16 @@ const importFromMnemonic = async () => {
     let accountInfo;
     let privateKey;
     try {
-        await (0, utils_1.retryRequest)(async () => {
+        const success = await (0, utils_1.retryRequest)(async () => {
             privateKey = await inputMnemonic();
+            if (!privateKey)
+                return false;
             console.log('keystore generation successful.\n');
             accountInfo = await importAccountAndSaveKeystore(privateKey);
+            return true;
         }, 3);
+        if (!success)
+            return;
     }
     catch (error) {
         console.log('Seed Phrase not available');
@@ -162,14 +167,17 @@ const importFromPrivateKey = async () => {
     let account;
     let privateKey;
     try {
-        await (0, utils_1.retryRequest)(async () => {
+        const success = await (0, utils_1.retryRequest)(async () => {
             const privateKeyInput = await (0, utils_1.inputWithCancel)('Enter your private key (64 characters,Input "q" to return):');
             if (!privateKeyInput)
                 return false;
             privateKey = antelope_1.PrivateKey.from(privateKeyInput);
             console.log('keystore generation successful.\n');
             account = await importAccountAndSaveKeystore(privateKey);
+            return true;
         }, 3);
+        if (!success)
+            return false;
     }
     catch (e) {
         console.log('Private key not available');
