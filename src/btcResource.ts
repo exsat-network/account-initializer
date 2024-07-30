@@ -97,28 +97,31 @@ export async function chargeForRegistry(username, btcAddress, amount) {
     axiosInstance.get('/api/config/exsat_config'),
   );
   console.log(`\nNetwork:${response3.data.info.btc_network}`);
+  let response;
   const txid = await input({
     message: `Enter the transaction ID after sending BTC: `,
-    validate: (input: string) => {
+    validate: async (input: string) => {
       if (input.length > 64) {
         return 'Invalid transaction ID.';
       }
-      return true;
+
+      try {
+        response = await axiosInstance.post('/api/users/submit-payment', {
+          txid: input,
+          amount,
+          username,
+        });
+        if (response.data.status === 'success') {
+          return true;
+        }
+        return response.data.message;
+      } catch (error: any) {
+        if (error.response && error.response.status === 409) {
+          return 'Transaction already submitted.';
+        }
+        return error.message;
+      }
     },
   });
-
-  const response2 = await retryRequest(() =>
-    axiosInstance.post('/api/users/submit-payment', {
-      txid,
-      amount,
-      username,
-    }),
-  );
-
-  if (response2.data.status === 'success') {
-    console.log(response2.data.message);
-  } else {
-    console.log('Payment not confirmed.');
-    return;
-  }
+  if (txid) console.log(response.data.message);
 }
