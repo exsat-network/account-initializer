@@ -204,7 +204,7 @@ async function checkAndCreatePath(directoryPath) {
 const selectDirPrompt = async () => {
     const rootPath = path_1.default.resolve(os.homedir() + '/.exsat');
     let choices;
-    if (isDocker()) {
+    if (!isDocker()) {
         choices = [
             { name: `Home Path(path:${rootPath})`, value: '2' },
             { name: 'Navigate To Select', value: '1' },
