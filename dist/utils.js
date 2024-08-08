@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.selectDirPrompt = exports.listDirectories = exports.inputWithCancel = exports.updateEnvFile = exports.clearLines = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = exports.keystoreExist = void 0;
+exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.selectDirPrompt = exports.listDirectories = exports.isDocker = exports.inputWithCancel = exports.updateEnvFile = exports.clearLines = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = exports.keystoreExist = void 0;
 const axios_1 = __importDefault(require("axios"));
 const constants_1 = require("./constants");
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -148,6 +148,28 @@ async function inputWithCancel(message, validatefn) {
     return value;
 }
 exports.inputWithCancel = inputWithCancel;
+function isDocker() {
+    try {
+        // Check for /.dockerenv file
+        if (fs_extra_1.default.existsSync('/.dockerenv')) {
+            return true;
+        }
+        // Check for /proc/1/cgroup file and look for docker or kubepods
+        const cgroupPath = '/proc/1/cgroup';
+        if (fs_extra_1.default.existsSync(cgroupPath)) {
+            const cgroupContent = fs_extra_1.default.readFileSync(cgroupPath, 'utf-8');
+            if (cgroupContent.includes('docker') ||
+                cgroupContent.includes('kubepods')) {
+                return true;
+            }
+        }
+    }
+    catch (err) {
+        console.error('Error checking if running in Docker:', err);
+    }
+    return false;
+}
+exports.isDocker = isDocker;
 const listDirectories = async (currentPath) => {
     const files = await fs_extra_1.default.readdir(currentPath);
     const directories = files.filter((file) => fs_extra_1.default.statSync(path_1.default.join(currentPath, file)).isDirectory());
@@ -181,13 +203,23 @@ async function checkAndCreatePath(directoryPath) {
 }
 const selectDirPrompt = async () => {
     const rootPath = path_1.default.resolve(os.homedir() + '/.exsat');
+    let choices;
+    if (isDocker()) {
+        choices = [
+            { name: `Home Path(path:${rootPath})`, value: '2' },
+            { name: 'Navigate To Select', value: '1' },
+            { name: 'Manually Enter a Directory Path', value: '3' },
+        ];
+    }
+    else {
+        choices = [
+            { name: `Home Path(path:${rootPath})`, value: '2' },
+            { name: 'Manually Enter a Directory Path', value: '3' },
+        ];
+    }
     const initialChoice = await (0, prompts_1.select)({
         message: '\nChoose a directory to save the keystore:',
-        choices: [
-            { name: 'Navigate To Select', value: '1' },
-            { name: `Client Root Directory(path:${rootPath})`, value: '2' },
-            { name: 'Manually Enter a Directory Path', value: '3' },
-        ],
+        choices: choices,
     });
     if (initialChoice === '3') {
         let attempts = 0;

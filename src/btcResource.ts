@@ -96,7 +96,7 @@ export async function chargeForRegistry(username, btcAddress, amount) {
   const response3 = await retryRequest(() =>
     axiosInstance.get('/api/config/exsat_config'),
   );
-  console.log(`\nNetwork:${response3.data.info.btc_network}`);
+  console.log(`Network:${response3.data.info.btc_network}\n`);
   let response;
   const txid = await input({
     message: `Enter the transaction ID after sending BTC: `,

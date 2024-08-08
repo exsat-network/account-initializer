@@ -17,8 +17,8 @@ import {
 import { createKeystore } from './web3';
 import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
-import { input, select, password } from '@inquirer/prompts';
-import { chargeBtcForResource, chargeForRegistry } from './btcResource';
+import { input, select, password, confirm } from '@inquirer/prompts';
+import { chargeForRegistry } from './btcResource';
 
 const validateUsername = (username: string): boolean => {
   const regex = /^[a-z1-5]{1,8}$/;
@@ -106,8 +106,18 @@ async function saveKeystore(privateKey: PrivateKey, username: string) {
 
   // const decryptedPrivateKey = await decryptKeystore(keystore, passwordInput);
   // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
-
-  const selectedPath = await selectDirPrompt();
+  let selectedPath;
+  let pathConfirm;
+  do {
+    selectedPath = await selectDirPrompt();
+    pathConfirm = await input({
+      message: `Please ensure that the save path you set ( ${selectedPath} ) matches the Docker mapping path. Otherwise, your keystore file may be lost. ( Enter "yes" to continue, or "no" to go back to the previous step ):`,
+      validate: (input) => {
+        if (['yes', 'no'].includes(input.toLowerCase())) return true;
+        else return 'Please input "yes" or "no".';
+      },
+    });
+  } while (pathConfirm.toLowerCase() === 'no');
 
   writeFileSync(
     `${selectedPath}/${username}_keystore.json`,
@@ -186,7 +196,7 @@ export const importFromMnemonic = async () => {
   } catch (error) {
     console.log('Seed Phrase not available');
   }
-  const keystoreFile = await saveKeystore(privateKey, accountInfo.accountName);
+  await saveKeystore(privateKey, accountInfo.accountName);
   return await processAccount(accountInfo);
 };
 async function inputMnemonic(): Promise<any> {
@@ -223,7 +233,7 @@ export const importFromPrivateKey = async () => {
     console.log('Private key not available');
     return;
   }
-  const keystoreFile = await saveKeystore(privateKey, account.accountName);
+  await saveKeystore(privateKey, account.accountName);
   return await processAccount(account);
 };
 export async function processAccount({

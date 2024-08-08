@@ -82,7 +82,7 @@ async function chargeForRegistry(username, btcAddress, amount) {
     qrcode_terminal_1.default.generate(btcAddress, { small: true });
     console.log(btcAddress);
     const response3 = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.get('/api/config/exsat_config'));
-    console.log(`\nNetwork:${response3.data.info.btc_network}`);
+    console.log(`Network:${response3.data.info.btc_network}\n`);
     let response;
     const txid = await (0, prompts_1.input)({
         message: `Enter the transaction ID after sending BTC: `,

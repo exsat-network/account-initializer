@@ -84,7 +84,20 @@ async function saveKeystore(privateKey, username) {
     // console.log(keystore);
     // const decryptedPrivateKey = await decryptKeystore(keystore, passwordInput);
     // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
-    const selectedPath = await (0, utils_1.selectDirPrompt)();
+    let selectedPath;
+    let pathConfirm;
+    do {
+        selectedPath = await (0, utils_1.selectDirPrompt)();
+        pathConfirm = await (0, prompts_1.input)({
+            message: `Please ensure that the save path you set ( ${selectedPath} ) matches the Docker mapping path. Otherwise, your keystore file may be lost. ( Enter "yes" to continue, or "no" to go back to the previous step ):`,
+            validate: (input) => {
+                if (['yes', 'no'].includes(input.toLowerCase()))
+                    return true;
+                else
+                    return 'Please input "yes" or "no".';
+            },
+        });
+    } while (pathConfirm.toLowerCase() === 'no');
     (0, fs_1.writeFileSync)(`${selectedPath}/${username}_keystore.json`, JSON.stringify(keystore));
     (0, utils_1.updateEnvFile)({ KEYSTORE_FILE: `${selectedPath}/${username}_keystore.json` });
     console.log(`\n${(0, utils_1.cmdRedFont)('!!!Remember to backup this file!!!')}\n`);
@@ -148,7 +161,7 @@ const importFromMnemonic = async () => {
     catch (error) {
         console.log('Seed Phrase not available');
     }
-    const keystoreFile = await saveKeystore(privateKey, accountInfo.accountName);
+    await saveKeystore(privateKey, accountInfo.accountName);
     return await processAccount(accountInfo);
 };
 exports.importFromMnemonic = importFromMnemonic;
@@ -183,7 +196,7 @@ const importFromPrivateKey = async () => {
         console.log('Private key not available');
         return;
     }
-    const keystoreFile = await saveKeystore(privateKey, account.accountName);
+    await saveKeystore(privateKey, account.accountName);
     return await processAccount(account);
 };
 exports.importFromPrivateKey = importFromPrivateKey;

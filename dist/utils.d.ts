@@ -7,6 +7,7 @@ export declare const retryRequest: (fn: () => Promise<any>, retries?: number) =>
 export declare function clearLines(numLines: number): void;
 export declare function updateEnvFile(values: any): boolean;
 export declare function inputWithCancel(message: string, validatefn?: (value: string) => boolean | string | Promise<string | boolean>): Promise<string | false>;
+export declare function isDocker(): boolean;
 export declare const listDirectories: (currentPath: string) => Promise<string[]>;
 export declare const selectDirPrompt: () => Promise<string | undefined>;
 export declare const cmdGreenFont: (msg: string) => string;

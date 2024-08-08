@@ -129,6 +129,31 @@ export async function inputWithCancel(
   return value;
 }
 
+export function isDocker(): boolean {
+  try {
+    // Check for /.dockerenv file
+    if (fs.existsSync('/.dockerenv')) {
+      return true;
+    }
+
+    // Check for /proc/1/cgroup file and look for docker or kubepods
+    const cgroupPath = '/proc/1/cgroup';
+    if (fs.existsSync(cgroupPath)) {
+      const cgroupContent = fs.readFileSync(cgroupPath, 'utf-8');
+      if (
+        cgroupContent.includes('docker') ||
+        cgroupContent.includes('kubepods')
+      ) {
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error('Error checking if running in Docker:', err);
+  }
+
+  return false;
+}
+
 export const listDirectories = async (currentPath: string) => {
   const files = await fs.readdir(currentPath);
   const directories = files.filter((file) =>
@@ -168,13 +193,22 @@ async function checkAndCreatePath(directoryPath: string): Promise<void> {
 
 export const selectDirPrompt = async () => {
   const rootPath = path.resolve(os.homedir() + '/.exsat');
+  let choices;
+  if (isDocker()) {
+    choices = [
+      { name: `Home Path(path:${rootPath})`, value: '2' },
+      { name: 'Navigate To Select', value: '1' },
+      { name: 'Manually Enter a Directory Path', value: '3' },
+    ];
+  } else {
+    choices = [
+      { name: `Home Path(path:${rootPath})`, value: '2' },
+      { name: 'Manually Enter a Directory Path', value: '3' },
+    ];
+  }
   const initialChoice = await select({
     message: '\nChoose a directory to save the keystore:',
-    choices: [
-      { name: 'Navigate To Select', value: '1' },
-      { name: `Client Root Directory(path:${rootPath})`, value: '2' },
-      { name: 'Manually Enter a Directory Path', value: '3' },
-    ],
+    choices: choices,
   });
 
   if (initialChoice === '3') {
