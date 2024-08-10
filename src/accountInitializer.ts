@@ -9,6 +9,7 @@ import {
   cmdGreenFont,
   cmdRedFont,
   inputWithCancel,
+  isDocker,
   keystoreExist,
   retryRequest,
   selectDirPrompt,
@@ -107,16 +108,18 @@ async function saveKeystore(privateKey: PrivateKey, username: string) {
   // const decryptedPrivateKey = await decryptKeystore(keystore, passwordInput);
   // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
   let selectedPath;
-  let pathConfirm;
+  let pathConfirm = 'yes';
   do {
     selectedPath = await selectDirPrompt();
-    pathConfirm = await input({
-      message: `Please ensure that the save path you set ( ${selectedPath} ) matches the Docker mapping path. Otherwise, your keystore file may be lost. ( Enter "yes" to continue, or "no" to go back to the previous step ):`,
-      validate: (input) => {
-        if (['yes', 'no'].includes(input.toLowerCase())) return true;
-        else return 'Please input "yes" or "no".';
-      },
-    });
+    if (isDocker()) {
+      pathConfirm = await input({
+        message: `Please ensure that the save path you set ( ${selectedPath} ) matches the Docker mapping path. Otherwise, your keystore file may be lost. ( Enter "yes" to continue, or "no" to go back to the previous step ):`,
+        validate: (input) => {
+          if (['yes', 'no'].includes(input.toLowerCase())) return true;
+          else return 'Please input "yes" or "no".';
+        },
+      });
+    }
   } while (pathConfirm.toLowerCase() === 'no');
 
   writeFileSync(

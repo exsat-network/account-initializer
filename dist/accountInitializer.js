@@ -85,18 +85,20 @@ async function saveKeystore(privateKey, username) {
     // const decryptedPrivateKey = await decryptKeystore(keystore, passwordInput);
     // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
     let selectedPath;
-    let pathConfirm;
+    let pathConfirm = 'yes';
     do {
         selectedPath = await (0, utils_1.selectDirPrompt)();
-        pathConfirm = await (0, prompts_1.input)({
-            message: `Please ensure that the save path you set ( ${selectedPath} ) matches the Docker mapping path. Otherwise, your keystore file may be lost. ( Enter "yes" to continue, or "no" to go back to the previous step ):`,
-            validate: (input) => {
-                if (['yes', 'no'].includes(input.toLowerCase()))
-                    return true;
-                else
-                    return 'Please input "yes" or "no".';
-            },
-        });
+        if ((0, utils_1.isDocker)()) {
+            pathConfirm = await (0, prompts_1.input)({
+                message: `Please ensure that the save path you set ( ${selectedPath} ) matches the Docker mapping path. Otherwise, your keystore file may be lost. ( Enter "yes" to continue, or "no" to go back to the previous step ):`,
+                validate: (input) => {
+                    if (['yes', 'no'].includes(input.toLowerCase()))
+                        return true;
+                    else
+                        return 'Please input "yes" or "no".';
+                },
+            });
+        }
     } while (pathConfirm.toLowerCase() === 'no');
     (0, fs_1.writeFileSync)(`${selectedPath}/${username}_keystore.json`, JSON.stringify(keystore));
     (0, utils_1.updateEnvFile)({ KEYSTORE_FILE: `${selectedPath}/${username}_keystore.json` });
