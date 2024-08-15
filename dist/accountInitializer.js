@@ -102,14 +102,13 @@ async function saveKeystore(privateKey, username) {
     } while (pathConfirm.toLowerCase() === 'no');
     (0, fs_1.writeFileSync)(`${selectedPath}/${username}_keystore.json`, JSON.stringify(keystore));
     (0, utils_1.updateEnvFile)({ KEYSTORE_FILE: `${selectedPath}/${username}_keystore.json` });
-    console.log(`\n${(0, utils_1.cmdRedFont)('!!!Remember to backup this file!!!')}\n`);
-    console.log(`\n${(0, utils_1.cmdGreenFont)(`Saved Successed: ${selectedPath}/${username}_keystore.json`)}\n`);
+    console.log(`\n${(0, utils_1.cmdRedFont)('!!!Remember to backup this file!!!')}`);
+    console.log(`${(0, utils_1.cmdGreenFont)(`Saved Successed: ${selectedPath}/${username}_keystore.json`)}\n`);
     return `${selectedPath}/${username}_keystore.json`;
 }
 async function generateKeystore(username) {
     const mnemonic = (0, bip39_1.generateMnemonic)(english_1.wordlist);
-    console.log(`Your Seed Phrase: \n`);
-    console.log(`${(0, utils_1.cmdGreenFont)(mnemonic)}\n`);
+    console.log(`${(0, utils_1.cmdGreenFont)(`\nYour Seed Phrase: \n${mnemonic}`)}\n`);
     await (0, prompts_1.input)({
         message: "Please confirm that you have backed up and saved the seed phrase (input 'Yes' after you have saved the seed phrase):",
         validate: (input) => {
@@ -245,12 +244,12 @@ const initializeAccount = async (role) => {
     }
     let registryStatus;
     const username = await (0, prompts_1.input)({
-        message: 'Enter a username (1-8 characters, a-z, 1-5.Input "q" to return): ',
+        message: 'Enter a Account Name (1-8 characters, a-z, 1-5.Input "q" to return): ',
         validate: async (input) => {
             if (input === 'q')
                 return true;
             if (!validateUsername(input)) {
-                return 'Please enter a username that is 1-8 characters long, contains only a-z and 1-5.';
+                return 'Please enter a Account Name that is 1-8 characters long, contains only a-z and 1-5.';
             }
             const response = await (0, exports.checkUsernameWithBackend)(input);
             registryStatus = response.status;
@@ -266,8 +265,9 @@ const initializeAccount = async (role) => {
     });
     if (username === 'q')
         return false;
+    console.log((0, utils_1.cmdGreenFont)(`  Your Account : ${username}.sat`));
     let email = await (0, prompts_1.input)({
-        message: '\nEnter your email address(for emergency notify): ',
+        message: 'Enter your email address(for emergency notify): ',
     });
     let confirmEmail = await (0, prompts_1.input)({
         message: 'Confirm your email address: ',

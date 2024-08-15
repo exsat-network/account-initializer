@@ -18,7 +18,7 @@ import {
 import { createKeystore } from './web3';
 import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
-import { input, select, password, confirm } from '@inquirer/prompts';
+import { input, select, password } from '@inquirer/prompts';
 import { chargeForRegistry } from './btcResource';
 
 const validateUsername = (username: string): boolean => {
@@ -128,9 +128,9 @@ async function saveKeystore(privateKey: PrivateKey, username: string) {
   );
   updateEnvFile({ KEYSTORE_FILE: `${selectedPath}/${username}_keystore.json` });
 
-  console.log(`\n${cmdRedFont('!!!Remember to backup this file!!!')}\n`);
+  console.log(`\n${cmdRedFont('!!!Remember to backup this file!!!')}`);
   console.log(
-    `\n${cmdGreenFont(
+    `${cmdGreenFont(
       `Saved Successed: ${selectedPath}/${username}_keystore.json`,
     )}\n`,
   );
@@ -139,8 +139,7 @@ async function saveKeystore(privateKey: PrivateKey, username: string) {
 
 async function generateKeystore(username) {
   const mnemonic = generateMnemonic(wordlist);
-  console.log(`Your Seed Phrase: \n`);
-  console.log(`${cmdGreenFont(mnemonic)}\n`);
+  console.log(`${cmdGreenFont(`\nYour Seed Phrase: \n${mnemonic}`)}\n`);
   await input({
     message:
       "Please confirm that you have backed up and saved the seed phrase (input 'Yes' after you have saved the seed phrase):",
@@ -289,11 +288,11 @@ export const initializeAccount = async (role?) => {
   let registryStatus;
   const username = await input({
     message:
-      'Enter a username (1-8 characters, a-z, 1-5.Input "q" to return): ',
+      'Enter a Account Name (1-8 characters, a-z, 1-5.Input "q" to return): ',
     validate: async (input) => {
       if (input === 'q') return true;
       if (!validateUsername(input)) {
-        return 'Please enter a username that is 1-8 characters long, contains only a-z and 1-5.';
+        return 'Please enter a Account Name that is 1-8 characters long, contains only a-z and 1-5.';
       }
       const response = await checkUsernameWithBackend(input);
       registryStatus = response.status;
@@ -308,9 +307,10 @@ export const initializeAccount = async (role?) => {
     },
   });
   if (username === 'q') return false;
+  console.log(cmdGreenFont(`  Your Account : ${username}.sat`));
 
   let email = await input({
-    message: '\nEnter your email address(for emergency notify): ',
+    message: 'Enter your email address(for emergency notify): ',
   });
   let confirmEmail = await input({
     message: 'Confirm your email address: ',

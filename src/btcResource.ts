@@ -89,7 +89,9 @@ export const chargeBtcForResource = async (encFile?) => {
 };
 
 export async function chargeForRegistry(username, btcAddress, amount) {
-  console.log(`Please send ${amount} BTC to the following address:`);
+  console.log(
+    `Please send $\{amount} BTC to the following address and send the transaction ID to the system. Once the system receives this BTC, it will officially create your account on the exSat network: ${username}.sat. The BTC you send will be cross-chained to your exSat account and used for subsequent on-chain operations as Gas Fee.`,
+  );
   qrcode.generate(btcAddress, { small: true });
   console.log(btcAddress);
 
