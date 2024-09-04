@@ -78,9 +78,14 @@ const chargeBtcForResource = async (encFile) => {
 };
 exports.chargeBtcForResource = chargeBtcForResource;
 async function chargeForRegistry(username, btcAddress, amount) {
-    console.log(`Please send $\{amount} BTC to the following address and send the transaction ID to the system. Once the system receives this BTC, it will officially create your account on the exSat network: ${username}.sat. The BTC you send will be cross-chained to your exSat account and used for subsequent on-chain operations as Gas Fee.`);
+    console.log('-----------------------------------------------\n' +
+        `· Please send 0.01 BTC to the following BTC address and send the Transaction ID to the system. \n` +
+        `· Once the system receives this BTC, your exSat account ( ${username} ) will be officially created on the exSat network. \n` +
+        `· The BTC you send will be cross-chained to your exSat account and used for subsequent on-chain operations as Gas Fee.\n` +
+        '-----------------------------------------------');
     qrcode_terminal_1.default.generate(btcAddress, { small: true });
-    console.log(btcAddress);
+    console.log(`BTC Address：${btcAddress}\n` +
+        '-----------------------------------------------');
     const response3 = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.get('/api/config/exsat_config'));
     console.log(`Network:${response3.data.info.btc_network}\n`);
     let response;

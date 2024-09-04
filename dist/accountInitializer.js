@@ -38,6 +38,16 @@ const checkUsernameWithBackend = async (username) => {
     }
 };
 exports.checkUsernameWithBackend = checkUsernameWithBackend;
+const getInputRole = async () => {
+    const role = await (0, prompts_1.select)({
+        message: 'Select a role',
+        choices: [
+            { name: 'Synchronizer', value: 'Synchronizer' },
+            { name: 'Validator', value: 'Validator' },
+        ],
+    });
+    return role;
+};
 const checkUsernameRegisterOrder = async (username) => {
     try {
         const response = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/users/my', { username }));
@@ -57,7 +67,7 @@ const checkUsernameRegisterOrder = async (username) => {
     }
 };
 exports.checkUsernameRegisterOrder = checkUsernameRegisterOrder;
-async function saveKeystore(privateKey, username) {
+async function saveKeystore(privateKey, username, role) {
     let passwordInput = await (0, prompts_1.password)({
         message: 'Set a password to encrypt the private key (at least 6 characters): ',
         mask: '*',
@@ -101,12 +111,15 @@ async function saveKeystore(privateKey, username) {
         }
     } while (pathConfirm.toLowerCase() === 'no');
     (0, fs_1.writeFileSync)(`${selectedPath}/${username}_keystore.json`, JSON.stringify(keystore));
-    (0, utils_1.updateEnvFile)({ KEYSTORE_FILE: `${selectedPath}/${username}_keystore.json` });
+    const keystoreFileKey = role.toUpperCase() + '_KEYSTORE_FILE';
+    (0, utils_1.updateEnvFile)({
+        [keystoreFileKey]: `${selectedPath}/${username}_keystore.json`,
+    });
     console.log(`\n${(0, utils_1.cmdRedFont)('!!!Remember to backup this file!!!')}`);
     console.log(`${(0, utils_1.cmdGreenFont)(`Saved Successed: ${selectedPath}/${username}_keystore.json`)}\n`);
     return `${selectedPath}/${username}_keystore.json`;
 }
-async function generateKeystore(username) {
+async function generateKeystore(username, role) {
     const mnemonic = (0, bip39_1.generateMnemonic)(english_1.wordlist);
     console.log(`${(0, utils_1.cmdGreenFont)(`\nYour Seed Phrase: \n${mnemonic}`)}\n`);
     await (0, prompts_1.input)({
@@ -126,7 +139,7 @@ async function generateKeystore(username) {
     const privateKey = antelope_1.PrivateKey.from(wif_1.default.encode(128, node.privateKey, false).toString());
     const publicKey = privateKey.toPublic().toString();
     console.log('Key pair generation successful.\n');
-    await saveKeystore(privateKey, username);
+    await saveKeystore(privateKey, username, role);
     return { privateKey, publicKey, username };
 }
 async function importAccountAndSaveKeystore(privateKey) {
@@ -144,7 +157,10 @@ async function importAccountAndSaveKeystore(privateKey) {
         throw new Error('Account name is not matched.');
     }, 3);
 }
-const importFromMnemonic = async () => {
+const importFromMnemonic = async (role) => {
+    if (!role) {
+        role = await getInputRole();
+    }
     let accountInfo;
     let privateKey;
     try {
@@ -162,7 +178,7 @@ const importFromMnemonic = async () => {
     catch (error) {
         console.log('Seed Phrase not available');
     }
-    await saveKeystore(privateKey, accountInfo.accountName);
+    await saveKeystore(privateKey, accountInfo.accountName, role);
     return await processAccount(accountInfo);
 };
 exports.importFromMnemonic = importFromMnemonic;
@@ -177,7 +193,10 @@ async function inputMnemonic() {
     (0, utils_1.clearLines)(2);
     return privateKey;
 }
-const importFromPrivateKey = async () => {
+const importFromPrivateKey = async (role) => {
+    if (!role) {
+        role = await getInputRole();
+    }
     let account;
     let privateKey;
     try {
@@ -197,7 +216,7 @@ const importFromPrivateKey = async () => {
         console.log('Private key not available');
         return;
     }
-    await saveKeystore(privateKey, account.accountName);
+    await saveKeystore(privateKey, account.accountName, role);
     return await processAccount(account);
 };
 exports.importFromPrivateKey = importFromPrivateKey;
@@ -237,7 +256,7 @@ async function processAccount({ accountName, pubkey, status, btcAddress, amount,
 }
 exports.processAccount = processAccount;
 const initializeAccount = async (role) => {
-    const keystoreFile = (0, utils_1.keystoreExist)();
+    const keystoreFile = (0, utils_1.keystoreExist)(role);
     if (keystoreFile) {
         console.log(`\nAn account has already been created in ${keystoreFile}.`);
         return;
@@ -281,15 +300,8 @@ const initializeAccount = async (role) => {
             message: 'Confirm your email address: ',
         });
     }
-    const roleOptions = [
-        { name: 'Synchronizer', value: 'Synchronizer' },
-        { name: 'Validator', value: 'Validator' },
-    ];
     if (!role) {
-        role = await (0, prompts_1.select)({
-            message: 'Select a role:',
-            choices: roleOptions,
-        });
+        role = await getInputRole();
     }
     let rewardAddress = '';
     let commissionRate = '';
@@ -314,7 +326,7 @@ const initializeAccount = async (role) => {
             },
         });
     }
-    const { publicKey } = await generateKeystore(username);
+    const { publicKey } = await generateKeystore(username, role);
     const infoJson = '{}';
     //infoJson = await addMoreInformation();
     try {

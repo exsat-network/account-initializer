@@ -1,4 +1,4 @@
-export declare function keystoreExist(): string | false;
+export declare function keystoreExist(role?: string): string | false | undefined;
 export declare const saveSelectedPath: (selectedPath: string) => void;
 export declare const readSelectedPath: () => string | null;
 export declare const deleteTempFile: () => void;

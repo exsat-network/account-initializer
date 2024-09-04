@@ -35,9 +35,13 @@ const prompts_1 = require("@inquirer/prompts");
 const dotenv = __importStar(require("dotenv"));
 const node_util_1 = require("node:util");
 const os = __importStar(require("node:os"));
-function keystoreExist() {
-    if (process.env.KEYSTORE_FILE && fs_extra_1.default.existsSync(process.env.KEYSTORE_FILE)) {
-        return process.env.KEYSTORE_FILE;
+function keystoreExist(role) {
+    if (role) {
+        const keystoreFileKey = role.toLowerCase() + '_KEYSTORE_FILE';
+        if (process.env[keystoreFileKey] &&
+            fs_extra_1.default.existsSync(process.env[keystoreFileKey] ?? '')) {
+            return process.env[keystoreFileKey];
+        }
     }
     const dir = path_1.default.resolve(__dirname, '..');
     const files = fs_extra_1.default.readdirSync(dir);

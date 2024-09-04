@@ -47,6 +47,16 @@ export const checkUsernameWithBackend = async (
     return false;
   }
 };
+const getInputRole = async () => {
+  const role = await select({
+    message: 'Select a role',
+    choices: [
+      { name: 'Synchronizer', value: 'Synchronizer' },
+      { name: 'Validator', value: 'Validator' },
+    ],
+  });
+  return role;
+};
 
 export const checkUsernameRegisterOrder = async (
   username: string,
@@ -71,7 +81,8 @@ export const checkUsernameRegisterOrder = async (
     return false;
   }
 };
-async function saveKeystore(privateKey: PrivateKey, username: string) {
+
+async function saveKeystore(privateKey: PrivateKey, username: string, role) {
   let passwordInput = await password({
     message:
       'Set a password to encrypt the private key (at least 6 characters): ',
@@ -126,7 +137,10 @@ async function saveKeystore(privateKey: PrivateKey, username: string) {
     `${selectedPath}/${username}_keystore.json`,
     JSON.stringify(keystore),
   );
-  updateEnvFile({ KEYSTORE_FILE: `${selectedPath}/${username}_keystore.json` });
+  const keystoreFileKey = role.toUpperCase() + '_KEYSTORE_FILE';
+  updateEnvFile({
+    [keystoreFileKey]: `${selectedPath}/${username}_keystore.json`,
+  });
 
   console.log(`\n${cmdRedFont('!!!Remember to backup this file!!!')}`);
   console.log(
@@ -137,7 +151,7 @@ async function saveKeystore(privateKey: PrivateKey, username: string) {
   return `${selectedPath}/${username}_keystore.json`;
 }
 
-async function generateKeystore(username) {
+async function generateKeystore(username, role) {
   const mnemonic = generateMnemonic(wordlist);
   console.log(`${cmdGreenFont(`\nYour Seed Phrase: \n${mnemonic}`)}\n`);
   await input({
@@ -163,10 +177,11 @@ async function generateKeystore(username) {
 
   console.log('Key pair generation successful.\n');
 
-  await saveKeystore(privateKey, username);
+  await saveKeystore(privateKey, username, role);
 
   return { privateKey, publicKey, username };
 }
+
 async function importAccountAndSaveKeystore(privateKey: PrivateKey) {
   return await retryRequest(async () => {
     const accountName = await input({
@@ -183,7 +198,10 @@ async function importAccountAndSaveKeystore(privateKey: PrivateKey) {
   }, 3);
 }
 
-export const importFromMnemonic = async () => {
+export const importFromMnemonic = async (role?) => {
+  if (!role) {
+    role = await getInputRole();
+  }
   let accountInfo;
   let privateKey;
   try {
@@ -198,9 +216,10 @@ export const importFromMnemonic = async () => {
   } catch (error) {
     console.log('Seed Phrase not available');
   }
-  await saveKeystore(privateKey, accountInfo.accountName);
+  await saveKeystore(privateKey, accountInfo.accountName, role);
   return await processAccount(accountInfo);
 };
+
 async function inputMnemonic(): Promise<any> {
   const mnemonic = await inputWithCancel(
     'Enter Your Seed Phrase (12 words,Input "q" to return):',
@@ -216,7 +235,11 @@ async function inputMnemonic(): Promise<any> {
   clearLines(2);
   return privateKey;
 }
-export const importFromPrivateKey = async () => {
+
+export const importFromPrivateKey = async (role?) => {
+  if (!role) {
+    role = await getInputRole();
+  }
   let account;
   let privateKey;
   try {
@@ -235,9 +258,10 @@ export const importFromPrivateKey = async () => {
     console.log('Private key not available');
     return;
   }
-  await saveKeystore(privateKey, account.accountName);
+  await saveKeystore(privateKey, account.accountName, role);
   return await processAccount(account);
 };
+
 export async function processAccount({
   accountName,
   pubkey,
@@ -279,8 +303,9 @@ export async function processAccount({
     }
   } while (action !== '99');
 }
-export const initializeAccount = async (role?) => {
-  const keystoreFile = keystoreExist();
+
+export const initializeAccount = async (role) => {
+  const keystoreFile = keystoreExist(role);
   if (keystoreFile) {
     console.log(`\nAn account has already been created in ${keystoreFile}.`);
     return;
@@ -328,16 +353,8 @@ export const initializeAccount = async (role?) => {
     });
   }
 
-  const roleOptions = [
-    { name: 'Synchronizer', value: 'Synchronizer' },
-    { name: 'Validator', value: 'Validator' },
-  ];
-
   if (!role) {
-    role = await select({
-      message: 'Select a role:',
-      choices: roleOptions,
-    });
+    role = await getInputRole();
   }
   let rewardAddress = '';
   let commissionRate = '';
@@ -363,7 +380,7 @@ export const initializeAccount = async (role?) => {
       },
     });
   }
-  const { publicKey } = await generateKeystore(username);
+  const { publicKey } = await generateKeystore(username, role);
   const infoJson: string = '{}';
   //infoJson = await addMoreInformation();
   try {

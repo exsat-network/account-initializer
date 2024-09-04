@@ -7,9 +7,15 @@ import * as dotenv from 'dotenv';
 import { promisify } from 'node:util';
 import * as os from 'node:os';
 
-export function keystoreExist() {
-  if (process.env.KEYSTORE_FILE && fs.existsSync(process.env.KEYSTORE_FILE)) {
-    return process.env.KEYSTORE_FILE;
+export function keystoreExist(role?: string) {
+  if (role) {
+    const keystoreFileKey = role.toLowerCase() + '_KEYSTORE_FILE';
+    if (
+      process.env[keystoreFileKey] &&
+      fs.existsSync(process.env[keystoreFileKey] ?? '')
+    ) {
+      return process.env[keystoreFileKey];
+    }
   }
   const dir = path.resolve(__dirname, '..');
   const files = fs.readdirSync(dir);

@@ -3,7 +3,7 @@ import { showMenu } from './menu';
 
 const main = async () => {
   console.log('Welcome to exSat Account Manager');
-  await showMenu();
+  await showMenu({ role: 'Synchronizer' });
 };
 
 main().then(() => {});
