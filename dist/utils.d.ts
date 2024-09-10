@@ -9,7 +9,7 @@ export declare function updateEnvFile(values: any): boolean;
 export declare function inputWithCancel(message: string, validatefn?: (value: string) => boolean | string | Promise<string | boolean>): Promise<string | false>;
 export declare function isDocker(): boolean;
 export declare const listDirectories: (currentPath: string) => Promise<string[]>;
-export declare const selectDirPrompt: () => Promise<string | undefined>;
+export declare const selectDirPrompt: () => Promise<any>;
 export declare const cmdGreenFont: (msg: string) => string;
 export declare const cmdRedFont: (msg: string) => string;
 export declare const cmdYellowFont: (msg: string) => string;

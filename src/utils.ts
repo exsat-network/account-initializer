@@ -175,6 +175,7 @@ const validatePath = (inputPath: string): boolean => {
 };
 const access = promisify(fs.access);
 const mkdir = promisify(fs.mkdir);
+
 async function checkAndCreatePath(directoryPath: string): Promise<void> {
   const parentDir = path.dirname(directoryPath);
 
@@ -198,17 +199,19 @@ async function checkAndCreatePath(directoryPath: string): Promise<void> {
 }
 
 export const selectDirPrompt = async () => {
-  const rootPath = path.resolve(os.homedir() + '/.exsat');
+  let rootPath;
   let choices;
   if (!isDocker()) {
+    rootPath = path.resolve(os.homedir() + '/.exsat');
     choices = [
       { name: `Home Path(path:${rootPath})`, value: '2' },
       { name: 'Navigate To Select', value: '1' },
       { name: 'Manually Enter a Directory Path', value: '3' },
     ];
   } else {
+    rootPath = path.resolve('/app/.exsat');
     choices = [
-      { name: `Home Path(path:${rootPath})`, value: '2' },
+      { name: `Root Path(path:${rootPath})`, value: '2' },
       { name: 'Manually Enter a Directory Path', value: '3' },
     ];
   }
