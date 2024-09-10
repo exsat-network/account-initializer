@@ -61,7 +61,7 @@ const parseAndValidatePrivateKey = (data, ignoreLength) => {
     let privateKeyUint8Array;
     // To avoid the case of 1 character less in a hex string which is prefixed with '0' by using 'bytesToUint8Array'
     if (!ignoreLength &&
-        typeof data === "string" &&
+        typeof data === 'string' &&
         (0, web3_validator_1.isHexStrict)(data) &&
         data.length !== 66) {
         throw new web3_errors_1.PrivateKeyLengthError();
@@ -85,7 +85,7 @@ const createKeystore = async (privateKey, password, username, options) => {
     let salt;
     if (options?.salt) {
         salt =
-            typeof options.salt === "string"
+            typeof options.salt === 'string'
                 ? (0, web3_utils_1.hexToBytes)(options.salt)
                 : options.salt;
     }
@@ -95,11 +95,11 @@ const createKeystore = async (privateKey, password, username, options) => {
     if (!((0, web3_validator_1.isString)(password) || (0, web3_utils_1.isUint8Array)(password))) {
         throw new web3_errors_1.InvalidPasswordError();
     }
-    const uint8ArrayPassword = typeof password === "string" ? (0, web3_utils_1.hexToBytes)((0, web3_utils_1.utf8ToHex)(password)) : password;
+    const uint8ArrayPassword = typeof password === 'string' ? (0, web3_utils_1.hexToBytes)((0, web3_utils_1.utf8ToHex)(password)) : password;
     let initializationVector;
     if (options?.iv) {
         initializationVector =
-            typeof options.iv === "string" ? (0, web3_utils_1.hexToBytes)(options.iv) : options.iv;
+            typeof options.iv === 'string' ? (0, web3_utils_1.hexToBytes)(options.iv) : options.iv;
         if (initializationVector.length !== 16) {
             throw new web3_errors_1.IVLengthError();
         }
@@ -107,41 +107,41 @@ const createKeystore = async (privateKey, password, username, options) => {
     else {
         initializationVector = (0, web3_utils_1.randomBytes)(16);
     }
-    const kdf = options?.kdf ?? "scrypt";
+    const kdf = options?.kdf ?? 'scrypt';
     let derivedKey;
     let kdfparams;
     // derive key from key derivation function
-    if (kdf === "pbkdf2") {
+    if (kdf === 'pbkdf2') {
         kdfparams = {
             dklen: options?.dklen ?? 32,
-            salt: (0, web3_utils_1.bytesToHex)(salt).replace("0x", ""),
+            salt: (0, web3_utils_1.bytesToHex)(salt).replace('0x', ''),
             c: options?.c ?? 262144,
-            prf: "hmac-sha256",
+            prf: 'hmac-sha256',
         };
         if (kdfparams.c < 1000) {
             // error when c < 1000, pbkdf2 is less secure with less iterations
             throw new web3_errors_1.PBKDF2IterationsError();
         }
-        derivedKey = (0, pbkdf2_js_1.pbkdf2Sync)(uint8ArrayPassword, salt, kdfparams.c, kdfparams.dklen, "sha256");
+        derivedKey = (0, pbkdf2_js_1.pbkdf2Sync)(uint8ArrayPassword, salt, kdfparams.c, kdfparams.dklen, 'sha256');
     }
-    else if (kdf === "scrypt") {
+    else if (kdf === 'scrypt') {
         kdfparams = {
             n: options?.n ?? 8192,
             r: options?.r ?? 8,
             p: options?.p ?? 1,
             dklen: options?.dklen ?? 32,
-            salt: (0, web3_utils_1.bytesToHex)(salt).replace("0x", ""),
+            salt: (0, web3_utils_1.bytesToHex)(salt).replace('0x', ''),
         };
         derivedKey = (0, scrypt_js_1.scryptSync)(uint8ArrayPassword, salt, kdfparams.n, kdfparams.p, kdfparams.r, kdfparams.dklen);
     }
     else {
         throw new web3_errors_1.InvalidKdfError();
     }
-    const cipher = await (0, aes_js_1.encrypt)(privateKeyUint8Array, derivedKey.slice(0, 16), initializationVector, "aes-128-ctr");
+    const cipher = await (0, aes_js_1.encrypt)(privateKeyUint8Array, derivedKey.slice(0, 16), initializationVector, 'aes-128-ctr');
     const ciphertext = (0, web3_utils_1.bytesToHex)(cipher).slice(2);
     const pvKeyFromWif = antelope_1.PrivateKey.from(wif_1.default.encode(128, Buffer.from(privekeyByte), false).toString());
     const publicKey = pvKeyFromWif.toPublic().toString();
-    const mac = (0, web3_utils_1.sha3Raw)((0, web3_utils_1.uint8ArrayConcat)(derivedKey.slice(16, 32), cipher)).replace("0x", "");
+    const mac = (0, web3_utils_1.sha3Raw)((0, web3_utils_1.uint8ArrayConcat)(derivedKey.slice(16, 32), cipher)).replace('0x', '');
     return {
         version: 3,
         id: (0, web3_utils_1.uuidV4)(),
@@ -150,9 +150,9 @@ const createKeystore = async (privateKey, password, username, options) => {
         crypto: {
             ciphertext,
             cipherparams: {
-                iv: (0, web3_utils_1.bytesToHex)(initializationVector).replace("0x", ""),
+                iv: (0, web3_utils_1.bytesToHex)(initializationVector).replace('0x', ''),
             },
-            cipher: "aes-128-ctr",
+            cipher: 'aes-128-ctr',
             kdf,
             kdfparams,
             mac,
@@ -161,35 +161,35 @@ const createKeystore = async (privateKey, password, username, options) => {
 };
 exports.createKeystore = createKeystore;
 const decryptKeystore = async (keystore, password, nonStrict) => {
-    const json = typeof keystore === "object"
+    const json = typeof keystore === 'object'
         ? keystore
         : JSON.parse(nonStrict ? keystore.toLowerCase() : keystore);
     web3_validator_1.validator.validateJSONSchema(constants_1.keyStoreSchema, json);
     if (json.version !== 3)
         throw new web3_errors_1.KeyStoreVersionError();
-    const uint8ArrayPassword = typeof password === "string" ? (0, web3_utils_1.hexToBytes)((0, web3_utils_1.utf8ToHex)(password)) : password;
-    web3_validator_1.validator.validate(["bytes"], [uint8ArrayPassword]);
+    const uint8ArrayPassword = typeof password === 'string' ? (0, web3_utils_1.hexToBytes)((0, web3_utils_1.utf8ToHex)(password)) : password;
+    web3_validator_1.validator.validate(['bytes'], [uint8ArrayPassword]);
     let derivedKey;
-    if (json.crypto.kdf === "scrypt") {
+    if (json.crypto.kdf === 'scrypt') {
         const kdfparams = json.crypto.kdfparams;
-        const uint8ArraySalt = typeof kdfparams.salt === "string"
+        const uint8ArraySalt = typeof kdfparams.salt === 'string'
             ? (0, web3_utils_1.hexToBytes)(kdfparams.salt)
             : kdfparams.salt;
         derivedKey = (0, scrypt_js_1.scryptSync)(uint8ArrayPassword, uint8ArraySalt, kdfparams.n, kdfparams.p, kdfparams.r, kdfparams.dklen);
     }
-    else if (json.crypto.kdf === "pbkdf2") {
+    else if (json.crypto.kdf === 'pbkdf2') {
         const kdfparams = json.crypto
             .kdfparams;
-        const uint8ArraySalt = typeof kdfparams.salt === "string"
+        const uint8ArraySalt = typeof kdfparams.salt === 'string'
             ? (0, web3_utils_1.hexToBytes)(kdfparams.salt)
             : kdfparams.salt;
-        derivedKey = (0, pbkdf2_js_1.pbkdf2Sync)(uint8ArrayPassword, uint8ArraySalt, kdfparams.c, kdfparams.dklen, "sha256");
+        derivedKey = (0, pbkdf2_js_1.pbkdf2Sync)(uint8ArrayPassword, uint8ArraySalt, kdfparams.c, kdfparams.dklen, 'sha256');
     }
     else {
         throw new web3_errors_1.InvalidKdfError();
     }
     const ciphertext = (0, web3_utils_1.hexToBytes)(json.crypto.ciphertext);
-    const mac = (0, web3_utils_1.sha3Raw)((0, web3_utils_1.uint8ArrayConcat)(derivedKey.slice(16, 32), ciphertext)).replace("0x", "");
+    const mac = (0, web3_utils_1.sha3Raw)((0, web3_utils_1.uint8ArrayConcat)(derivedKey.slice(16, 32), ciphertext)).replace('0x', '');
     if (mac !== json.crypto.mac) {
         throw new web3_errors_1.KeyDerivationError();
     }

@@ -206,9 +206,10 @@ async function checkAndCreatePath(directoryPath) {
     await mkdir(directoryPath);
 }
 const selectDirPrompt = async () => {
-    const rootPath = path_1.default.resolve(os.homedir() + '/.exsat');
+    let rootPath;
     let choices;
     if (!isDocker()) {
+        rootPath = path_1.default.resolve(os.homedir() + '/.exsat');
         choices = [
             { name: `Home Path(path:${rootPath})`, value: '2' },
             { name: 'Navigate To Select', value: '1' },
@@ -216,8 +217,9 @@ const selectDirPrompt = async () => {
         ];
     }
     else {
+        rootPath = path_1.default.resolve('/app/.exsat');
         choices = [
-            { name: `Home Path(path:${rootPath})`, value: '2' },
+            { name: `Root Path(path:${rootPath})`, value: '2' },
             { name: 'Manually Enter a Directory Path', value: '3' },
         ];
     }

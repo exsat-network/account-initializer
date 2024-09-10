@@ -49,7 +49,7 @@ export declare const secp256k1: Readonly<{
         precompute: (windowSize?: number | undefined, point?: import("@noble/curves/abstract/weierstrass").ProjPointType<bigint> | undefined) => import("@noble/curves/abstract/weierstrass").ProjPointType<bigint>;
     };
 }>;
-import { Bytes, CipherOptions, KeyStore } from "web3-types";
+import { Bytes, CipherOptions, KeyStore } from 'web3-types';
 /**
  * Get the private key Uint8Array after the validation.
  * Note: This function is not exported through main web3 package, so for using it directly import from accounts package.
