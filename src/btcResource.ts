@@ -62,7 +62,14 @@ export const chargeBtcForResource = async (encFile?) => {
 
     console.log(`Please send ${amount} BTC to the following address:`);
     qrcode.generate(btcAddress, { small: true });
-    console.log(btcAddress);
+    const response3 = await retryRequest(() =>
+      axiosInstance.get('/api/config/exsat_config'),
+    );
+    console.log(
+      `BTC Address：${btcAddress}\n` +
+        `Network:${response3.data.info.btc_network}\n` +
+        '-----------------------------------------------',
+    );
 
     const txid = await input({
       message: 'Enter the transaction ID after sending BTC: ',

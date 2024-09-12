@@ -155,7 +155,7 @@ exports.inputWithCancel = inputWithCancel;
 function isExsatDocker() {
     try {
         // Check for /.dockerenv file
-        if (fs_extra_1.default.existsSync('/exsat/config')) {
+        if (fs_extra_1.default.existsSync('/exsat.lock')) {
             return true;
         }
     }

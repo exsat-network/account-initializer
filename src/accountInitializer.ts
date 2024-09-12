@@ -262,7 +262,7 @@ export async function processAccount({
   const manageMessage = `-----------------------------------------------
    Account: ${accountName}
    Public Key: ${pubkey}
-   Account Registration Status: ${status === 'initial' ? 'Unregistered. Please recharge Gas Fee (BTC) to register.' : status === 'charging' ? 'Registering, this may take a moment. Please be patient.' : ''}
+   Account Registration Status: ${status === 'initial' ? 'Unregistered. Please recharge Gas Fee (BTC) to register.' : status === 'charging' ? 'Registering, this may take a moment. Please be patient.' : status === 'completed' ? 'Registered' : status}
   -----------------------------------------------`;
   const menus = [
     {
