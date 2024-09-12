@@ -135,23 +135,11 @@ export async function inputWithCancel(
   return value;
 }
 
-export function isDocker(): boolean {
+export function isExsatDocker(): boolean {
   try {
     // Check for /.dockerenv file
-    if (fs.existsSync('/.dockerenv')) {
+    if (fs.existsSync('/exsat/config')) {
       return true;
-    }
-
-    // Check for /proc/1/cgroup file and look for docker or kubepods
-    const cgroupPath = '/proc/1/cgroup';
-    if (fs.existsSync(cgroupPath)) {
-      const cgroupContent = fs.readFileSync(cgroupPath, 'utf-8');
-      if (
-        cgroupContent.includes('docker') ||
-        cgroupContent.includes('kubepods')
-      ) {
-        return true;
-      }
     }
   } catch (err) {
     console.error('Error checking if running in Docker:', err);
@@ -201,7 +189,7 @@ async function checkAndCreatePath(directoryPath: string): Promise<void> {
 export const selectDirPrompt = async () => {
   let rootPath;
   let choices;
-  if (!isDocker()) {
+  if (!isExsatDocker()) {
     rootPath = path.resolve(os.homedir() + '/.exsat');
     choices = [
       { name: `Home Path(path:${rootPath})`, value: '2' },

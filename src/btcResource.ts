@@ -92,19 +92,19 @@ export async function chargeForRegistry(username, btcAddress, amount) {
   console.log(
     '-----------------------------------------------\n' +
       `· Please send 0.01 BTC to the following BTC address and send the Transaction ID to the system. \n` +
-      `· Once the system receives this BTC, your exSat account ( ${username} ) will be officially created on the exSat network. \n` +
+      `· Once the system receives this BTC, your exSat account ( ${username}.sat ) will be officially created on the exSat network. \n` +
       `· The BTC you send will be cross-chained to your exSat account and used for subsequent on-chain operations as Gas Fee.\n` +
       '-----------------------------------------------',
   );
   qrcode.generate(btcAddress, { small: true });
-  console.log(
-    `BTC Address：${btcAddress}\n` +
-      '-----------------------------------------------',
-  );
   const response3 = await retryRequest(() =>
     axiosInstance.get('/api/config/exsat_config'),
   );
-  console.log(`Network:${response3.data.info.btc_network}\n`);
+  console.log(
+    `BTC Address：${btcAddress}\n` +
+      `Network:${response3.data.info.btc_network}\n` +
+      '-----------------------------------------------',
+  );
   let response;
   const txid = await input({
     message: `Enter the transaction ID after sending BTC: `,

@@ -8,8 +8,9 @@ import {
   clearLines,
   cmdGreenFont,
   cmdRedFont,
+  cmdYellowFont,
   inputWithCancel,
-  isDocker,
+  isExsatDocker,
   keystoreExist,
   retryRequest,
   selectDirPrompt,
@@ -33,19 +34,11 @@ const validateEmail = (email: string): boolean => {
 export const checkUsernameWithBackend = async (
   username: string,
 ): Promise<any> => {
-  try {
-    const response = await axiosInstance.post('/api/users/check-username', {
-      username,
-    });
+  const response = await axiosInstance.post('/api/users/check-username', {
+    username,
+  });
 
-    return response.data;
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Error checking username with backend:', error.message);
-    }
-
-    return false;
-  }
+  return response.data;
 };
 const getInputRole = async () => {
   const role = await select({
@@ -122,7 +115,7 @@ async function saveKeystore(privateKey: PrivateKey, username: string, role) {
   let pathConfirm = 'yes';
   do {
     selectedPath = await selectDirPrompt();
-    if (isDocker()) {
+    if (isExsatDocker()) {
       pathConfirm = await input({
         message: `Please ensure that the save path you set ( ${selectedPath} ) matches the Docker mapping path. Otherwise, your keystore file may be lost. ( Enter "yes" to continue, or "no" to go back to the previous step ):`,
         validate: (input) => {
@@ -153,7 +146,7 @@ async function saveKeystore(privateKey: PrivateKey, username: string, role) {
 
 async function generateKeystore(username, role) {
   const mnemonic = generateMnemonic(wordlist);
-  console.log(`${cmdGreenFont(`\nYour Seed Phrase: \n${mnemonic}`)}\n`);
+  console.log(`${cmdYellowFont(`\nYour Seed Phrase: \n${mnemonic}`)}\n`);
   await input({
     message:
       "Please confirm that you have backed up and saved the seed phrase (input 'Yes' after you have saved the seed phrase):",
@@ -205,16 +198,13 @@ export const importFromMnemonic = async (role?) => {
   let accountInfo;
   let privateKey;
   try {
-    const success = await retryRequest(async () => {
-      privateKey = await inputMnemonic();
-      if (!privateKey) return false;
-      console.log('keystore generation successful.\n');
-      accountInfo = await importAccountAndSaveKeystore(privateKey);
-      return true;
-    }, 3);
-    if (!success) return;
+    privateKey = await inputMnemonic();
+    if (!privateKey) return false;
+    console.log('keystore generation successful.\n');
+    accountInfo = await importAccountAndSaveKeystore(privateKey);
   } catch (error) {
     console.log('Seed Phrase not available');
+    return false;
   }
   await saveKeystore(privateKey, accountInfo.accountName, role);
   return await processAccount(accountInfo);
@@ -313,21 +303,25 @@ export const initializeAccount = async (role) => {
   let registryStatus;
   const username = await input({
     message:
-      'Enter a Account Name (1-8 characters, a-z, 1-5.Input "q" to return): ',
+      'Enter an Account Name (1-8 characters, a-z, 1-5. Input "q" to return): ',
     validate: async (input) => {
       if (input === 'q') return true;
       if (!validateUsername(input)) {
-        return 'Please enter a Account Name that is 1-8 characters long, contains only a-z and 1-5.';
+        return 'Please enter an Account Name that is 1-8 characters long, contains only a-z and 1-5.';
       }
-      const response = await checkUsernameWithBackend(input);
-      registryStatus = response.status;
-      switch (registryStatus) {
-        case 'valid':
-          return true;
-        case 'chain_off':
-          return 'The network query failed. Please try again later or contact the administrator.';
-        default:
-          return 'This username is already registered. Please enter another one.';
+      try {
+        const response = await checkUsernameWithBackend(input);
+        registryStatus = response.status;
+        switch (registryStatus) {
+          case 'valid':
+            return true;
+          case 'chain_off':
+            return 'The network query failed. Please try again later or contact the administrator.';
+          default:
+            return 'This username is already registered. Please enter another one.';
+        }
+      } catch (e: any) {
+        return `Request Error:${e.message}`;
       }
     },
   });

@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.selectDirPrompt = exports.listDirectories = exports.isDocker = exports.inputWithCancel = exports.updateEnvFile = exports.clearLines = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = exports.keystoreExist = void 0;
+exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.selectDirPrompt = exports.listDirectories = exports.isExsatDocker = exports.inputWithCancel = exports.updateEnvFile = exports.clearLines = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = exports.keystoreExist = void 0;
 const axios_1 = __importDefault(require("axios"));
 const constants_1 = require("./constants");
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -152,20 +152,11 @@ async function inputWithCancel(message, validatefn) {
     return value;
 }
 exports.inputWithCancel = inputWithCancel;
-function isDocker() {
+function isExsatDocker() {
     try {
         // Check for /.dockerenv file
-        if (fs_extra_1.default.existsSync('/.dockerenv')) {
+        if (fs_extra_1.default.existsSync('/exsat/config')) {
             return true;
-        }
-        // Check for /proc/1/cgroup file and look for docker or kubepods
-        const cgroupPath = '/proc/1/cgroup';
-        if (fs_extra_1.default.existsSync(cgroupPath)) {
-            const cgroupContent = fs_extra_1.default.readFileSync(cgroupPath, 'utf-8');
-            if (cgroupContent.includes('docker') ||
-                cgroupContent.includes('kubepods')) {
-                return true;
-            }
         }
     }
     catch (err) {
@@ -173,7 +164,7 @@ function isDocker() {
     }
     return false;
 }
-exports.isDocker = isDocker;
+exports.isExsatDocker = isExsatDocker;
 const listDirectories = async (currentPath) => {
     const files = await fs_extra_1.default.readdir(currentPath);
     const directories = files.filter((file) => fs_extra_1.default.statSync(path_1.default.join(currentPath, file)).isDirectory());
@@ -208,7 +199,7 @@ async function checkAndCreatePath(directoryPath) {
 const selectDirPrompt = async () => {
     let rootPath;
     let choices;
-    if (!isDocker()) {
+    if (!isExsatDocker()) {
         rootPath = path_1.default.resolve(os.homedir() + '/.exsat');
         choices = [
             { name: `Home Path(path:${rootPath})`, value: '2' },
