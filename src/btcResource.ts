@@ -167,4 +167,5 @@ export async function chargeForRegistry(username, btcAddress, amount) {
   });
 
   if (txid) console.log(response.data.message);
+  return username;
 }

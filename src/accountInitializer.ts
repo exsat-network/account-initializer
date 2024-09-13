@@ -218,7 +218,7 @@ export const processAccount = async ({
    Public Key: ${pubkey}
    Account Registration Status: ${status === 'initial' ? 'Unregistered. Please recharge Gas Fee (BTC) to register.' : status === 'charging' ? 'Registering, this may take a moment. Please be patient.' : status === 'completed' ? 'Registered' : status}
   -----------------------------------------------`;
-  const menus = [{ name: 'Return', value: '99', description: 'Return' }];
+  const menus = [{ name: 'Return', value: 'quit', description: 'Return' }];
   if (status === 'initial') {
     menus.unshift({
       name: 'Recharge BTC',
@@ -233,10 +233,10 @@ export const processAccount = async ({
   let action;
   do {
     action = await select({ message: manageMessage, choices: menus });
-    if (action !== '99') {
-      await (actions[action] || (() => {}))();
+    if (action !== 'quit') {
+      return await (actions[action] || (() => {}))();
     }
-  } while (action !== '99');
+  } while (action !== 'quit');
 };
 
 export const initializeAccount = async (role) => {
@@ -330,6 +330,7 @@ export const initializeAccount = async (role) => {
       throw new Error(response.data.message);
     const { btcAddress, amount } = response.data.info;
     await chargeForRegistry(username, btcAddress, amount);
+    return username;
   } catch (error: any) {
     console.error('Error creating account:', error.message);
   }
