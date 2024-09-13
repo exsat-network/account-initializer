@@ -22,24 +22,17 @@ import { bytesToHex } from 'web3-utils';
 import { input, select, password } from '@inquirer/prompts';
 import { chargeForRegistry } from './btcResource';
 
-const validateUsername = (username: string): boolean => {
-  const regex = /^[a-z1-5]{1,8}$/;
-  return regex.test(username);
-};
+const validateUsername = (username) => /^[a-z1-5]{1,8}$/.test(username);
 
-const validateEmail = (email: string): boolean => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-};
-export const checkUsernameWithBackend = async (
-  username: string,
-): Promise<any> => {
+const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+export const checkUsernameWithBackend = async (username) => {
   const response = await axiosInstance.post('/api/users/check-username', {
     username,
   });
-
   return response.data;
 };
+
 const getInputRole = async () => {
   const role = await select({
     message: 'Select a role',
@@ -51,31 +44,7 @@ const getInputRole = async () => {
   return role;
 };
 
-export const checkUsernameRegisterOrder = async (
-  username: string,
-): Promise<boolean> => {
-  try {
-    const response = await retryRequest(() =>
-      axiosInstance.post('/api/users/my', { username }),
-    );
-
-    const accountInfo = response.data;
-
-    if (accountInfo.status === 'success') {
-      return true;
-    } else {
-      return false;
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Error checking username with backend:', error.message);
-    }
-
-    return false;
-  }
-};
-
-async function saveKeystore(privateKey: PrivateKey, username: string, role) {
+const saveKeystore = async (privateKey, username, role) => {
   let passwordInput = await password({
     message:
       'Set a password to encrypt the private key (at least 6 characters): ',
@@ -106,11 +75,9 @@ async function saveKeystore(privateKey: PrivateKey, username: string, role) {
     passwordInput,
     username,
   );
+  process.env[`${role.toUpperCase()}_KEYSTORE_PASSWORD`] = passwordInput;
   console.log(`\nKeystore created successfully.\n`);
-  // console.log(keystore);
 
-  // const decryptedPrivateKey = await decryptKeystore(keystore, passwordInput);
-  // console.log(`\ndecryptedPrivateKey.${decryptedPrivateKey}\n`);
   let selectedPath;
   let pathConfirm = 'yes';
   do {
@@ -118,44 +85,32 @@ async function saveKeystore(privateKey: PrivateKey, username: string, role) {
     if (isExsatDocker()) {
       pathConfirm = await input({
         message: `Please ensure that the save path you set ( ${selectedPath} ) matches the Docker mapping path. Otherwise, your keystore file may be lost. ( Enter "yes" to continue, or "no" to go back to the previous step ):`,
-        validate: (input) => {
-          if (['yes', 'no'].includes(input.toLowerCase())) return true;
-          else return 'Please input "yes" or "no".';
-        },
+        validate: (input) =>
+          ['yes', 'no'].includes(input.toLowerCase()) ||
+          'Please input "yes" or "no".',
       });
     }
   } while (pathConfirm.toLowerCase() === 'no');
 
-  writeFileSync(
-    `${selectedPath}/${username}_keystore.json`,
-    JSON.stringify(keystore),
-  );
-  const keystoreFileKey = role.toUpperCase() + '_KEYSTORE_FILE';
-  updateEnvFile({
-    [keystoreFileKey]: `${selectedPath}/${username}_keystore.json`,
-  });
+  const keystoreFilePath = `${selectedPath}/${username}_keystore.json`;
+  writeFileSync(keystoreFilePath, JSON.stringify(keystore));
+
+  const keystoreFileKey = `${role.toUpperCase()}_KEYSTORE_FILE`;
+  updateEnvFile({ [keystoreFileKey]: keystoreFilePath });
 
   console.log(`\n${cmdRedFont('!!!Remember to backup this file!!!')}`);
-  console.log(
-    `${cmdGreenFont(
-      `Saved Successed: ${selectedPath}/${username}_keystore.json`,
-    )}\n`,
-  );
-  return `${selectedPath}/${username}_keystore.json`;
-}
+  console.log(`${cmdGreenFont(`Saved Successed: ${keystoreFilePath}`)}\n`);
+  return keystoreFilePath;
+};
 
-async function generateKeystore(username, role) {
+const generateKeystore = async (username, role) => {
   const mnemonic = generateMnemonic(wordlist);
   console.log(`${cmdYellowFont(`\nYour Seed Phrase: \n${mnemonic}`)}\n`);
   await input({
     message:
       "Please confirm that you have backed up and saved the seed phrase (input 'Yes' after you have saved the seed phrase):",
-    validate: (input) => {
-      if (input.toLowerCase() === 'yes') return true;
-      else {
-        return 'Please input “yes” to continue.';
-      }
-    },
+    validate: (input) =>
+      input.toLowerCase() === 'yes' || 'Please input “yes” to continue.',
   });
   clearLines(5);
 
@@ -169,13 +124,12 @@ async function generateKeystore(username, role) {
   const publicKey = privateKey.toPublic().toString();
 
   console.log('Key pair generation successful.\n');
-
   await saveKeystore(privateKey, username, role);
 
   return { privateKey, publicKey, username };
-}
+};
 
-async function importAccountAndSaveKeystore(privateKey: PrivateKey) {
+const importAccountAndSaveKeystore = async (privateKey) => {
   return await retryRequest(async () => {
     const accountName = await input({
       message: 'Enter your account name (1-8 characters):',
@@ -189,7 +143,23 @@ async function importAccountAndSaveKeystore(privateKey: PrivateKey) {
     }
     throw new Error('Account name is not matched.');
   }, 3);
-}
+};
+
+const inputMnemonic = async () => {
+  const mnemonic = await inputWithCancel(
+    'Enter Your Seed Phrase (12 words,Input "q" to return):',
+  );
+  if (!mnemonic) return false;
+  const seed = mnemonicToSeedSync(mnemonic.trim());
+  const master = HDKey.fromMasterSeed(Buffer.from(seed));
+  const node = master.derive("m/44'/194'/0'/0/0");
+
+  const privateKey = PrivateKey.from(
+    WIF.encode(128, node.privateKey, false).toString(),
+  );
+  clearLines(2);
+  return privateKey;
+};
 
 export const importFromMnemonic = async (role?) => {
   if (!role) {
@@ -209,22 +179,6 @@ export const importFromMnemonic = async (role?) => {
   await saveKeystore(privateKey, accountInfo.accountName, role);
   return await processAccount(accountInfo);
 };
-
-async function inputMnemonic(): Promise<any> {
-  const mnemonic = await inputWithCancel(
-    'Enter Your Seed Phrase (12 words,Input "q" to return):',
-  );
-  if (!mnemonic) return false;
-  const seed = mnemonicToSeedSync(mnemonic.trim());
-  const master = HDKey.fromMasterSeed(Buffer.from(seed));
-  const node = master.derive("m/44'/194'/0'/0/0");
-
-  const privateKey = PrivateKey.from(
-    WIF.encode(128, node.privateKey, false).toString(),
-  );
-  clearLines(2);
-  return privateKey;
-}
 
 export const importFromPrivateKey = async (role?) => {
   if (!role) {
@@ -252,25 +206,19 @@ export const importFromPrivateKey = async (role?) => {
   return await processAccount(account);
 };
 
-export async function processAccount({
+export const processAccount = async ({
   accountName,
   pubkey,
   status,
   btcAddress,
   amount,
-}) {
+}) => {
   const manageMessage = `-----------------------------------------------
    Account: ${accountName}
    Public Key: ${pubkey}
    Account Registration Status: ${status === 'initial' ? 'Unregistered. Please recharge Gas Fee (BTC) to register.' : status === 'charging' ? 'Registering, this may take a moment. Please be patient.' : status === 'completed' ? 'Registered' : status}
   -----------------------------------------------`;
-  const menus = [
-    {
-      name: 'Return',
-      value: '99',
-      description: 'Return',
-    },
-  ];
+  const menus = [{ name: 'Return', value: '99', description: 'Return' }];
   if (status === 'initial') {
     menus.unshift({
       name: 'Recharge BTC',
@@ -278,21 +226,18 @@ export async function processAccount({
       description: 'Recharge BTC',
     });
   }
-  const actions: { [key: string]: () => Promise<any> | void } = {
+  const actions = {
     recharge_btc: async () =>
       await chargeForRegistry(accountName, btcAddress, amount),
   };
   let action;
   do {
-    action = await select({
-      message: manageMessage,
-      choices: menus,
-    });
+    action = await select({ message: manageMessage, choices: menus });
     if (action !== '99') {
       await (actions[action] || (() => {}))();
     }
   } while (action !== '99');
-}
+};
 
 export const initializeAccount = async (role) => {
   const keystoreFile = keystoreExist(role);
@@ -331,9 +276,7 @@ export const initializeAccount = async (role) => {
   let email = await input({
     message: 'Enter your email address(for emergency notify): ',
   });
-  let confirmEmail = await input({
-    message: 'Confirm your email address: ',
-  });
+  let confirmEmail = await input({ message: 'Confirm your email address: ' });
 
   while (email !== confirmEmail || !validateEmail(email)) {
     console.log(
@@ -342,9 +285,7 @@ export const initializeAccount = async (role) => {
     email = await input({
       message: 'Enter your email address(for emergency notify): ',
     });
-    confirmEmail = await input({
-      message: 'Confirm your email address: ',
-    });
+    confirmEmail = await input({ message: 'Confirm your email address: ' });
   }
 
   if (!role) {
@@ -366,17 +307,13 @@ export const initializeAccount = async (role) => {
 
     rewardAddress = await input({
       message: 'Enter Reward Address',
-      validate: (input: string) => {
-        if (!/^0x[a-fA-F0-9]{40}$/.test(input)) {
-          return 'Please enter a valid account name.';
-        }
-        return true;
-      },
+      validate: (input) =>
+        /^0x[a-fA-F0-9]{40}$/.test(input) ||
+        'Please enter a valid account name.',
     });
   }
   const { publicKey } = await generateKeystore(username, role);
-  const infoJson: string = '{}';
-  //infoJson = await addMoreInformation();
+  const infoJson = '{}';
   try {
     const response = await retryRequest(() =>
       axiosInstance.post('/api/users/create-user', {
@@ -389,11 +326,11 @@ export const initializeAccount = async (role) => {
         commissionRate: commissionRate ? Number(commissionRate) : 0,
       }),
     );
+    if (response.data.status === 'error')
+      throw new Error(response.data.message);
     const { btcAddress, amount } = response.data.info;
     await chargeForRegistry(username, btcAddress, amount);
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Error creating account:', error.message);
-    }
+  } catch (error: any) {
+    console.error('Error creating account:', error.message);
   }
 };

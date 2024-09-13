@@ -3,119 +3,146 @@ import { MIN_BTC_AMOUNT } from './constants';
 import qrcode from 'qrcode-terminal';
 import { readFileSync } from 'fs';
 import { input } from '@inquirer/prompts';
+import { Font } from './font';
+
+const getKeystore = async (encFile?) => {
+  if (!encFile) {
+    encFile = keystoreExist();
+    if (!encFile) {
+      const filePath = await input({
+        message: 'Enter the path to your keystore file: ',
+      });
+      encFile = filePath;
+    }
+  }
+
+  const keystore = readFileSync(encFile, 'utf-8');
+  return JSON.parse(keystore);
+};
+
+const getAccountInfo = async (publicKey) => {
+  const account = await retryRequest(() =>
+    axiosInstance.post('/api/users/my', { publicKey }),
+  );
+
+  if (account.data.status === 'success') {
+    console.log(`\nusername: ${account.data.info.username}\n`);
+    return account.data.info.username;
+  } else {
+    console.log(`Account not found for publicKey: ${publicKey}`);
+    return null;
+  }
+};
+
+const getBtcAmount = async () => {
+  return await input({
+    message: `Enter the amount of BTC to charge (more than ${MIN_BTC_AMOUNT} BTC): `,
+    validate: (input) => {
+      const amount = parseFloat(input);
+      if (isNaN(amount) || amount < MIN_BTC_AMOUNT) {
+        return `Amount must be more than ${MIN_BTC_AMOUNT} BTC. Please try again.`;
+      }
+      return true;
+    },
+  });
+};
+
+const createPayment = async (username, amount) => {
+  const response = await retryRequest(() =>
+    axiosInstance.post('/api/payments/create-payment', {
+      username,
+      amount: parseFloat(amount),
+    }),
+  );
+
+  if (response.data.status !== 'success') {
+    console.log(response.data.message);
+    return null;
+  }
+
+  return response.data.info;
+};
+
+const submitPayment = async (txid, username) => {
+  const response2 = await retryRequest(() =>
+    axiosInstance.post('/api/payments/submit-payment', {
+      txid,
+      username,
+    }),
+  );
+
+  if (response2.data.status === 'success') {
+    console.log(response2.data.message);
+  } else {
+    console.log(response2.data.message);
+  }
+};
+
+const displayQrCode = (btcAddress, network) => {
+  console.log(`Please send BTC to the following address:`);
+  qrcode.generate(btcAddress, { small: true });
+  console.log(
+    `BTC Address：${btcAddress}\n` +
+      `Network:${network}\n` +
+      '-----------------------------------------------',
+  );
+};
 
 export const chargeBtcForResource = async (encFile?) => {
   try {
-    if (!encFile) {
-      encFile = keystoreExist();
-      if (!encFile) {
-        const filePath = await input({
-          message: 'Enter the path to your keystore file: ',
-        });
-        encFile = filePath;
-      }
-    }
+    const keystoreInfo = await getKeystore(encFile);
+    const username = await getAccountInfo(keystoreInfo.address);
 
-    const keystore = readFileSync(encFile, 'utf-8');
-    const keystoreInfo = JSON.parse(keystore);
-    let username = '';
+    if (!username) return;
 
-    const account = await retryRequest(() =>
-      axiosInstance.post('/api/users/my', { publicKey: keystoreInfo.address }),
-    );
+    const amountInput = await getBtcAmount();
+    const paymentInfo = await createPayment(username, amountInput);
 
-    const accountInfo = account.data;
+    if (!paymentInfo) return;
 
-    console.log(`\nusername: ${accountInfo.info.username}\n`);
+    const { btcAddress, amount } = paymentInfo;
 
-    if (accountInfo.status === 'success') {
-      username = accountInfo.info.username;
-    } else {
-      console.log(`Account not found for publicKey: ${keystoreInfo.address}`);
-      return;
-    }
-
-    const amountInput = await input({
-      message: `Enter the amount of BTC to charge (more than ${MIN_BTC_AMOUNT} BTC): `,
-      validate: (input) => {
-        const amount = parseFloat(input);
-        if (isNaN(amount) || amount < MIN_BTC_AMOUNT) {
-          return `Amount must be more than ${MIN_BTC_AMOUNT} BTC. Please try again.`;
-        }
-        return true;
-      },
-    });
-
-    const response = await retryRequest(() =>
-      axiosInstance.post('/api/payments/create-payment', {
-        username,
-        amount: parseFloat(amountInput),
-      }),
-    );
-
-    if (response.data.status != 'success') {
-      console.log(response.data.message);
-      return;
-    }
-
-    const { btcAddress, amount } = response.data.info;
-
-    console.log(`Please send ${amount} BTC to the following address:`);
-    qrcode.generate(btcAddress, { small: true });
-    const response3 = await retryRequest(() =>
+    const networkResponse = await retryRequest(() =>
       axiosInstance.get('/api/config/exsat_config'),
     );
-    console.log(
-      `BTC Address：${btcAddress}\n` +
-        `Network:${response3.data.info.btc_network}\n` +
-        '-----------------------------------------------',
-    );
+
+    displayQrCode(btcAddress, networkResponse.data.info.btc_network);
 
     const txid = await input({
       message: 'Enter the transaction ID after sending BTC: ',
     });
 
-    const response2 = await retryRequest(() =>
-      axiosInstance.post('/api/payments/submit-payment', {
-        txid,
-        username,
-      }),
-    );
-
-    if (response2.data.status === 'success') {
-      console.log(response2.data.message);
-    } else {
-      console.log(response2.data.message);
-      return;
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Error processing the request:', error.message);
-    }
+    await submitPayment(txid, username);
+  } catch (error: any) {
+    console.error('Error processing the request:', error.message);
   }
 };
 
 export async function chargeForRegistry(username, btcAddress, amount) {
   console.log(
-    '-----------------------------------------------\n' +
+    `${Font.fgCyan}${Font.bright}-----------------------------------------------\n` +
       `· Please send 0.01 BTC to the following BTC address and send the Transaction ID to the system. \n` +
-      `· Once the system receives this BTC, your exSat account ( ${username}.sat ) will be officially created on the exSat network. \n` +
+      `· Once the system receives this BTC, your exSat account (${Font.reset}${Font.bright} ${username}.sat ${Font.fgCyan}) will be officially created on the exSat network. \n` +
       `· The BTC you send will be cross-chained to your exSat account and used for subsequent on-chain operations as Gas Fee.\n` +
-      '-----------------------------------------------',
+      `-----------------------------------------------${Font.reset}`,
   );
+
   qrcode.generate(btcAddress, { small: true });
-  const response3 = await retryRequest(() =>
+
+  const networkResponse = await retryRequest(() =>
     axiosInstance.get('/api/config/exsat_config'),
   );
+
   console.log(
-    `BTC Address：${btcAddress}\n` +
-      `Network:${response3.data.info.btc_network}\n` +
-      '-----------------------------------------------',
+    `${Font.fgCyan}${Font.bright}BTC Address：${Font.reset}${Font.bright}${btcAddress}\n` +
+      `${Font.fgCyan}Network:${Font.reset}${Font.bright}${networkResponse.data.info.btc_network}\n` +
+      `${Font.fgCyan}-----------------------------------------------${Font.reset}`,
   );
+
   let response;
   const txid = await input({
     message: `Enter the transaction ID after sending BTC: `,
-    validate: async (input: string) => {
+    validate: async (input) => {
       if (input.length > 64) {
         return 'Invalid transaction ID.';
       }
@@ -138,5 +165,6 @@ export async function chargeForRegistry(username, btcAddress, amount) {
       }
     },
   });
+
   if (txid) console.log(response.data.message);
 }
