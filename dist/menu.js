@@ -24,6 +24,7 @@ const showMenu = async (options) => {
             { name: 'Charging BTC for Resource', value: '3' },
             { name: 'Generate Keystore From Mnemonic', value: '4' },
             { name: 'Generate Keystore From PrivateKey', value: '5' },
+            { name: 'change email', value: '7' },
             { name: 'Exit', value: '99' },
         ];
     }
@@ -45,10 +46,20 @@ const showMenu = async (options) => {
             await (0, btcResource_1.chargeBtcForResource)(); // Call the new function
             break;
         case '4':
-            await (0, accountInitializer_1.importFromMnemonic)();
-            break;
         case '5':
-            await (0, accountInitializer_1.importFromPrivateKey)();
+            const role = await (0, prompts_1.select)({
+                message: 'Select a role:',
+                choices: [
+                    { name: 'Sycnhronizer', value: 'Synchronizer' },
+                    { name: 'Validator', value: 'Validator' },
+                ],
+            });
+            if (choice === '4') {
+                await (0, accountInitializer_1.importFromMnemonic)(role);
+            }
+            else {
+                await (0, accountInitializer_1.importFromPrivateKey)(role);
+            }
             break;
         case '6':
             if (!keystoreFile)
@@ -64,6 +75,15 @@ const showMenu = async (options) => {
                     ...response,
                     accountName: accountInfo.username,
                 });
+            break;
+        case '7':
+            const username = await (0, prompts_1.input)({
+                message: 'Input your username:',
+            });
+            const email = await (0, prompts_1.input)({
+                message: 'Input your email:',
+            });
+            await (0, accountInitializer_1.changeEmail)(username, email);
             break;
         case '99':
             console.log('Exiting...');

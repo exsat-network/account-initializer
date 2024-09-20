@@ -26,21 +26,21 @@ const getKeystore = async (encFile) => {
 const getAccountInfo = async (publicKey) => {
     const account = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/users/my', { publicKey }));
     if (account.data.status === 'success') {
-        console.log(`\nusername: ${account.data.info.username}\n`);
+        console.log(`\nAccount: ${account.data.info.username}\n`);
         return account.data.info.username;
     }
     else {
-        console.log(`Account not found for publicKey: ${publicKey}`);
+        console.log(`${font_1.Font.fgYellow}${font_1.Font.bright}Account not found for publicKey: ${publicKey}${font_1.Font.reset}`);
         return null;
     }
 };
 const getBtcAmount = async () => {
     return await (0, prompts_1.input)({
-        message: `Enter the amount of BTC to charge (more than ${constants_1.MIN_BTC_AMOUNT} BTC): `,
+        message: `Enter the amount of BTC to bridge (at least ${constants_1.MIN_BTC_AMOUNT} BTC): `,
         validate: (input) => {
             const amount = parseFloat(input);
             if (isNaN(amount) || amount < constants_1.MIN_BTC_AMOUNT) {
-                return `Amount must be more than ${constants_1.MIN_BTC_AMOUNT} BTC. Please try again.`;
+                return `Amount must be at least ${constants_1.MIN_BTC_AMOUNT} BTC. Please try again.`;
             }
             return true;
         },
@@ -70,11 +70,11 @@ const submitPayment = async (txid, username) => {
     }
 };
 const displayQrCode = (btcAddress, network) => {
-    console.log(`Please send BTC to the following address:`);
+    console.log(`${font_1.Font.fgCyan}${font_1.Font.bright}-----------------------------------------------\nPlease send BTC to the following address:${font_1.Font.reset}`);
     qrcode_terminal_1.default.generate(btcAddress, { small: true });
-    console.log(`BTC Address：${btcAddress}\n` +
-        `Network:${network}\n` +
-        '-----------------------------------------------');
+    console.log(`${font_1.Font.bright}${font_1.Font.fgCyan}BTC Address：${font_1.Font.reset}${font_1.Font.bright}${btcAddress}\n` +
+        `${font_1.Font.fgCyan}Network:${font_1.Font.reset}${font_1.Font.bright}${network}\n` +
+        `${font_1.Font.fgCyan}-----------------------------------------------${font_1.Font.reset}`);
 };
 const chargeBtcForResource = async (encFile) => {
     try {
@@ -136,8 +136,6 @@ async function chargeForRegistry(username, btcAddress, amount) {
             }
         },
     });
-    if (txid)
-        console.log(response.data.message);
     return username;
 }
 exports.chargeForRegistry = chargeForRegistry;

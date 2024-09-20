@@ -21,19 +21,24 @@ import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
 import { input, select, password } from '@inquirer/prompts';
 import { chargeForRegistry } from './btcResource';
+import { Font } from './font';
 
-const validateUsername = (username) => /^[a-z1-5]{1,8}$/.test(username);
+function validateUsername(username) {
+  return /^[a-z1-5]{1,8}$/.test(username);
+}
 
-const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 
-export const checkUsernameWithBackend = async (username) => {
+export async function checkUsernameWithBackend(username) {
   const response = await axiosInstance.post('/api/users/check-username', {
     username,
   });
   return response.data;
-};
+}
 
-const getInputRole = async () => {
+async function getInputRole() {
   const role = await select({
     message: 'Select a role',
     choices: [
@@ -42,41 +47,41 @@ const getInputRole = async () => {
     ],
   });
   return role;
-};
+}
 
-const saveKeystore = async (privateKey, username, role) => {
-  let passwordInput = await password({
-    message:
-      'Set a password to encrypt the private key (at least 6 characters): ',
-    mask: '*',
-    validate: (input) =>
-      input.length >= 6 || 'Password must be at least 6 characters.',
-  });
-  let passwordConfirmInput = await password({
-    message: 'Confirm your password: ',
-    mask: '*',
-  });
-  while (passwordInput !== passwordConfirmInput) {
-    console.log(`\n${cmdRedFont('Password not match, please try again.')}\n`);
-    passwordInput = await password({
-      message: 'Enter a password to encrypt your private key(>= 6 digits): ',
+async function saveKeystore(privateKey, username, role) {
+  const getPasswordInput = async (message) => {
+    return await password({
+      message,
       mask: '*',
       validate: (input) =>
-        input.length >= 6 || 'Password must be at least 6 characters long.',
+        input.length >= 6 || 'Password must be at least 6 characters.',
     });
-    passwordConfirmInput = await password({
-      message: 'Confirm your password: ',
-      mask: '*',
-    });
+  };
+
+  let passwordInput = await getPasswordInput(
+    'Set a password to encrypt the private key (at least 6 characters): ',
+  );
+  let passwordConfirmInput = await getPasswordInput('Confirm your password: ');
+
+  while (passwordInput !== passwordConfirmInput) {
+    console.log(`\n${cmdRedFont('Password not match, please try again.')}\n`);
+    passwordInput = await getPasswordInput(
+      'Enter a password to encrypt your private key (at least 6 characters): ',
+    );
+    passwordConfirmInput = await getPasswordInput('Confirm your password: ');
   }
 
+  // Continue with the rest of the keystore saving logic
   const keystore = await createKeystore(
     `${bytesToHex(WIF.decode(privateKey.toWif(), 128).privateKey)}`,
     passwordInput,
     username,
   );
   process.env[`${role.toUpperCase()}_KEYSTORE_PASSWORD`] = passwordInput;
-  console.log(`\nKeystore created successfully.\n`);
+  console.log(
+    `\n${Font.fgCyan}${Font.bright}Keystore created successfully.${Font.reset}\n`,
+  );
 
   let selectedPath;
   let pathConfirm = 'yes';
@@ -101,14 +106,14 @@ const saveKeystore = async (privateKey, username, role) => {
   console.log(`\n${cmdRedFont('!!!Remember to backup this file!!!')}`);
   console.log(`${cmdGreenFont(`Saved Successed: ${keystoreFilePath}`)}\n`);
   return keystoreFilePath;
-};
+}
 
-const generateKeystore = async (username, role) => {
+async function generateKeystore(username, role) {
   const mnemonic = generateMnemonic(wordlist);
   console.log(`${cmdYellowFont(`\nYour Seed Phrase: \n${mnemonic}`)}\n`);
   await input({
     message:
-      "Please confirm that you have backed up and saved the seed phrase (input 'Yes' after you have saved the seed phrase):",
+      "Please confirm that you have backed up and saved the seed phrase (Input 'yes' after you have saved the seed phrase, and then the seed phrase will be hidden.):",
     validate: (input) =>
       input.toLowerCase() === 'yes' || 'Please input “yes” to continue.',
   });
@@ -123,13 +128,15 @@ const generateKeystore = async (username, role) => {
   );
   const publicKey = privateKey.toPublic().toString();
 
-  console.log('Key pair generation successful.\n');
+  console.log(
+    `\n${Font.fgCyan}${Font.bright}Key pair generation successful.${Font.reset}\N`,
+  );
   await saveKeystore(privateKey, username, role);
 
   return { privateKey, publicKey, username };
-};
+}
 
-const importAccountAndSaveKeystore = async (privateKey) => {
+async function importAccountAndSaveKeystore(privateKey) {
   return await retryRequest(async () => {
     const accountName = await input({
       message: 'Enter your account name (1-8 characters):',
@@ -143,9 +150,9 @@ const importAccountAndSaveKeystore = async (privateKey) => {
     }
     throw new Error('Account name is not matched.');
   }, 3);
-};
+}
 
-const inputMnemonic = async () => {
+async function inputMnemonic() {
   const mnemonic = await inputWithCancel(
     'Enter Your Seed Phrase (12 words,Input "q" to return):',
   );
@@ -159,9 +166,9 @@ const inputMnemonic = async () => {
   );
   clearLines(2);
   return privateKey;
-};
+}
 
-export const importFromMnemonic = async (role?) => {
+export async function importFromMnemonic(role) {
   if (!role) {
     role = await getInputRole();
   }
@@ -170,17 +177,21 @@ export const importFromMnemonic = async (role?) => {
   try {
     privateKey = await inputMnemonic();
     if (!privateKey) return false;
-    console.log('keystore generation successful.\n');
+    console.log(
+      `${Font.fgCyan}${Font.bright}keystore generation successful.${Font.reset}\n`,
+    );
     accountInfo = await importAccountAndSaveKeystore(privateKey);
-  } catch (error) {
-    console.log('Seed Phrase not available');
+  } catch (error: any) {
+    console.log(
+      `${Font.fgYellow}${Font.bright}Seed Phrase not available${Font.reset}`,
+    );
     return false;
   }
   await saveKeystore(privateKey, accountInfo.accountName, role);
   return await processAccount(accountInfo);
-};
+}
 
-export const importFromPrivateKey = async (role?) => {
+export async function importFromPrivateKey(role) {
   if (!role) {
     role = await getInputRole();
   }
@@ -193,26 +204,30 @@ export const importFromPrivateKey = async (role?) => {
       );
       if (!privateKeyInput) return false;
       privateKey = PrivateKey.from(privateKeyInput);
-      console.log('keystore generation successful.\n');
+      console.log(
+        `${Font.fgCyan}${Font.bright}keystore generation successful.${Font.reset}\n`,
+      );
       account = await importAccountAndSaveKeystore(privateKey);
       return true;
     }, 3);
     if (!success) return false;
   } catch (e) {
-    console.log('Private key not available');
+    console.log(
+      `${Font.fgYellow}${Font.bright}Private key not available${Font.fgYellow}`,
+    );
     return;
   }
   await saveKeystore(privateKey, account.accountName, role);
   return await processAccount(account);
-};
+}
 
-export const processAccount = async ({
+export async function processAccount({
   accountName,
   pubkey,
   status,
   btcAddress,
   amount,
-}) => {
+}) {
   const manageMessage = `-----------------------------------------------
    Account: ${accountName}
    Public Key: ${pubkey}
@@ -237,12 +252,89 @@ export const processAccount = async ({
       return await (actions[action] || (() => {}))();
     }
   } while (action !== 'quit');
-};
+}
 
-export const initializeAccount = async (role) => {
+async function requestVerificationCode(username, email, type) {
+  try {
+    const response = await axiosInstance.post('/api/users/request-code', {
+      username,
+      type,
+      email,
+    });
+
+    if (response.data.status !== 'success') {
+      throw new Error(response.data.message);
+    }
+
+    return true;
+  } catch (error: any) {
+    console.error('Error requesting verification code:', error.message);
+    return false;
+  }
+}
+
+export async function changeEmail(username, email) {
+  try {
+    const requestChange = await requestVerificationCode(username, email, 'UPD');
+    if (!requestChange) return false;
+
+    console.log(
+      `${Font.fgCyan}${Font.bright}A verification link has been sent to your current email(${email}). Please follow the instructions in the email to change your email.${Font.reset}`,
+    );
+    return true;
+  } catch (error: any) {
+    console.error('Error requesting email change:', error.message);
+    return false;
+  }
+}
+
+async function verifyCode(username, email, type) {
+  for (let attempts = 0; attempts < 3; attempts++) {
+    const verificationCode = await input({
+      message: 'Enter the verification code sent to your email: ',
+      validate: (input) =>
+        input.length >= 6 && /^\d+$/.test(input)
+          ? true
+          : 'Password must be at least 6 digits and contain only digits.',
+    });
+
+    try {
+      const verifyCodeResponse = await axiosInstance.post(
+        '/api/users/verify-code',
+        {
+          username: `${username}.sat`,
+          type,
+          email,
+          code: verificationCode,
+        },
+      );
+
+      if (
+        verifyCodeResponse.data.status === 'success' &&
+        verifyCodeResponse.data.valid
+      ) {
+        console.log(
+          `${Font.fgCyan}${Font.bright}Email verification successful.${Font.reset}`,
+        );
+        return true;
+      } else {
+        console.error('Verification failed. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Error during email verification:', error.message);
+    }
+  }
+
+  console.error('Too many failed attempts. Please try again later.');
+  return false;
+}
+
+export async function initializeAccount(role) {
   const keystoreFile = keystoreExist(role);
   if (keystoreFile) {
-    console.log(`\nAn account has already been created in ${keystoreFile}.`);
+    console.log(
+      `\n${Font.fgYellow}${Font.bright}An account has already been created in ${keystoreFile}.${Font.reset}`,
+    );
     return;
   }
   let registryStatus;
@@ -265,8 +357,8 @@ export const initializeAccount = async (role) => {
           default:
             return 'This username is already registered. Please enter another one.';
         }
-      } catch (e: any) {
-        return `Request Error:${e.message}`;
+      } catch (error: any) {
+        return `Request Error:${error.message}`;
       }
     },
   });
@@ -280,13 +372,26 @@ export const initializeAccount = async (role) => {
 
   while (email !== confirmEmail || !validateEmail(email)) {
     console.log(
-      'Email addresses do not match or are invalid. Please enter your email address again.',
+      `${Font.fgYellow}${Font.bright}Email addresses do not match or are invalid. Please enter your email address again.${Font.reset}`,
     );
     email = await input({
       message: 'Enter your email address(for emergency notify): ',
     });
     confirmEmail = await input({ message: 'Confirm your email address: ' });
   }
+
+  const requestCodeSuccess = await requestVerificationCode(
+    username,
+    email,
+    'REG',
+  );
+  if (!requestCodeSuccess) return false;
+  console.log(
+    `${Font.fgCyan}${Font.bright}Please check your email(${email}) for the verification code.${Font.reset}`,
+  );
+
+  const verificationCode = await verifyCode(username, email, 'REG');
+  if (!verificationCode) return false;
 
   if (!role) {
     role = await getInputRole();
@@ -334,4 +439,4 @@ export const initializeAccount = async (role) => {
   } catch (error: any) {
     console.error('Error creating account:', error.message);
   }
-};
+}

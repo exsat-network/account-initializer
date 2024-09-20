@@ -1,4 +1,5 @@
 import {
+  changeEmail,
   checkUsernameWithBackend,
   importFromMnemonic,
   importFromPrivateKey,
@@ -7,7 +8,7 @@ import {
 } from './accountInitializer';
 import { queryAccount } from './query';
 import { chargeBtcForResource } from './btcResource'; // Import the new function
-import { select } from '@inquirer/prompts';
+import { input, select } from '@inquirer/prompts';
 import { keystoreExist } from './utils';
 import { readFileSync } from 'fs';
 
@@ -31,6 +32,7 @@ export const showMenu = async (options?: InitializeAccountOptions) => {
       { name: 'Charging BTC for Resource', value: '3' }, // New menu item
       { name: 'Generate Keystore From Mnemonic', value: '4' },
       { name: 'Generate Keystore From PrivateKey', value: '5' },
+      { name: 'change email', value: '7' },
       { name: 'Exit', value: '99' },
     ];
   }
@@ -54,10 +56,19 @@ export const showMenu = async (options?: InitializeAccountOptions) => {
       await chargeBtcForResource(); // Call the new function
       break;
     case '4':
-      await importFromMnemonic();
-      break;
     case '5':
-      await importFromPrivateKey();
+      const role = await select({
+        message: 'Select a role:',
+        choices: [
+          { name: 'Sycnhronizer', value: 'Synchronizer' },
+          { name: 'Validator', value: 'Validator' },
+        ],
+      });
+      if (choice === '4') {
+        await importFromMnemonic(role);
+      } else {
+        await importFromPrivateKey(role);
+      }
       break;
     case '6':
       if (!keystoreFile) return;
@@ -73,6 +84,15 @@ export const showMenu = async (options?: InitializeAccountOptions) => {
           ...response,
           accountName: accountInfo.username,
         });
+      break;
+    case '7':
+      const username = await input({
+        message: 'Input your username:',
+      });
+      const email = await input({
+        message: 'Input your email:',
+      });
+      await changeEmail(username, email);
       break;
     case '99':
       console.log('Exiting...');

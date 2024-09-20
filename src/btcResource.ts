@@ -26,21 +26,23 @@ const getAccountInfo = async (publicKey) => {
   );
 
   if (account.data.status === 'success') {
-    console.log(`\nusername: ${account.data.info.username}\n`);
+    console.log(`\nAccount: ${account.data.info.username}\n`);
     return account.data.info.username;
   } else {
-    console.log(`Account not found for publicKey: ${publicKey}`);
+    console.log(
+      `${Font.fgYellow}${Font.bright}Account not found for publicKey: ${publicKey}${Font.reset}`,
+    );
     return null;
   }
 };
 
 const getBtcAmount = async () => {
   return await input({
-    message: `Enter the amount of BTC to charge (more than ${MIN_BTC_AMOUNT} BTC): `,
+    message: `Enter the amount of BTC to bridge (at least ${MIN_BTC_AMOUNT} BTC): `,
     validate: (input) => {
       const amount = parseFloat(input);
       if (isNaN(amount) || amount < MIN_BTC_AMOUNT) {
-        return `Amount must be more than ${MIN_BTC_AMOUNT} BTC. Please try again.`;
+        return `Amount must be at least ${MIN_BTC_AMOUNT} BTC. Please try again.`;
       }
       return true;
     },
@@ -79,12 +81,14 @@ const submitPayment = async (txid, username) => {
 };
 
 const displayQrCode = (btcAddress, network) => {
-  console.log(`Please send BTC to the following address:`);
+  console.log(
+    `${Font.fgCyan}${Font.bright}-----------------------------------------------\nPlease send BTC to the following address:${Font.reset}`,
+  );
   qrcode.generate(btcAddress, { small: true });
   console.log(
-    `BTC Address：${btcAddress}\n` +
-      `Network:${network}\n` +
-      '-----------------------------------------------',
+    `${Font.bright}${Font.fgCyan}BTC Address：${Font.reset}${Font.bright}${btcAddress}\n` +
+      `${Font.fgCyan}Network:${Font.reset}${Font.bright}${network}\n` +
+      `${Font.fgCyan}-----------------------------------------------${Font.reset}`,
   );
 };
 
@@ -166,6 +170,5 @@ export async function chargeForRegistry(username, btcAddress, amount) {
     },
   });
 
-  if (txid) console.log(response.data.message);
   return username;
 }
