@@ -26,7 +26,9 @@ const getAccountInfo = async (publicKey) => {
   );
 
   if (account.data.status === 'success') {
-    console.log(`\nAccount: ${account.data.info.username}\n`);
+    console.log(
+      `\n${Font.fgCyan}${Font.bright}Account:${Font.reset}${Font.bright} ${account.data.info.username}${Font.reset}\n`,
+    );
     return account.data.info.username;
   } else {
     console.log(

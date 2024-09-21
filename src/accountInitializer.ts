@@ -65,7 +65,9 @@ async function saveKeystore(privateKey, username, role) {
   let passwordConfirmInput = await getPasswordInput('Confirm your password: ');
 
   while (passwordInput !== passwordConfirmInput) {
-    console.log(`\n${cmdRedFont('Password not match, please try again.')}\n`);
+    console.log(
+      `\n${Font.fgYellow}${Font.bright}'Password not match, please try again.'${Font.reset}\n`,
+    );
     passwordInput = await getPasswordInput(
       'Enter a password to encrypt your private key (at least 6 characters): ',
     );
@@ -129,7 +131,7 @@ async function generateKeystore(username, role) {
   const publicKey = privateKey.toPublic().toString();
 
   console.log(
-    `\n${Font.fgCyan}${Font.bright}Key pair generation successful.${Font.reset}\N`,
+    `\n${Font.fgCyan}${Font.bright}Key pair generation successful.${Font.reset}\n`,
   );
   await saveKeystore(privateKey, username, role);
 
