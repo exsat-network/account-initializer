@@ -26,7 +26,7 @@ const getKeystore = async (encFile) => {
 const getAccountInfo = async (publicKey) => {
     const account = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/users/my', { publicKey }));
     if (account.data.status === 'success') {
-        console.log(`\nAccount: ${account.data.info.username}\n`);
+        console.log(`\n${font_1.Font.fgCyan}${font_1.Font.bright}Account:${font_1.Font.reset}${font_1.Font.bright} ${account.data.info.username}${font_1.Font.reset}\n`);
         return account.data.info.username;
     }
     else {

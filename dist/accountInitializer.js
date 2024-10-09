@@ -50,7 +50,7 @@ async function saveKeystore(privateKey, username, role) {
     let passwordInput = await getPasswordInput('Set a password to encrypt the private key (at least 6 characters): ');
     let passwordConfirmInput = await getPasswordInput('Confirm your password: ');
     while (passwordInput !== passwordConfirmInput) {
-        console.log(`\n${(0, utils_1.cmdRedFont)('Password not match, please try again.')}\n`);
+        console.log(`\n${font_1.Font.fgYellow}${font_1.Font.bright}'Password not match, please try again.'${font_1.Font.reset}\n`);
         passwordInput = await getPasswordInput('Enter a password to encrypt your private key (at least 6 characters): ');
         passwordConfirmInput = await getPasswordInput('Confirm your password: ');
     }
@@ -91,7 +91,7 @@ async function generateKeystore(username, role) {
     const node = master.derive("m/44'/194'/0'/0/0");
     const privateKey = antelope_1.PrivateKey.from(wif_1.default.encode(128, node.privateKey, false).toString());
     const publicKey = privateKey.toPublic().toString();
-    console.log(`\n${font_1.Font.fgCyan}${font_1.Font.bright}Key pair generation successful.${font_1.Font.reset}\N`);
+    console.log(`\n${font_1.Font.fgCyan}${font_1.Font.bright}Key pair generation successful.${font_1.Font.reset}\n`);
     await saveKeystore(privateKey, username, role);
     return { privateKey, publicKey, username };
 }
@@ -317,7 +317,7 @@ async function initializeAccount(role) {
     let commissionRate = '';
     if (role === 'Validator') {
         commissionRate = await (0, prompts_1.input)({
-            message: 'Enter commission rate (0-10000)',
+            message: 'Enter Commission Ratio (0-10000):',
             validate: (input) => {
                 const number = Number(input);
                 if (!Number.isInteger(number) || number < 0 || number > 10000) {
@@ -329,7 +329,7 @@ async function initializeAccount(role) {
         rewardAddress = await (0, prompts_1.input)({
             message: 'Enter Reward Address',
             validate: (input) => /^0x[a-fA-F0-9]{40}$/.test(input) ||
-                'Please enter a valid account name.',
+                'Please enter a valid reward address.',
         });
     }
     const { publicKey } = await generateKeystore(username, role);

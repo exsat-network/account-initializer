@@ -402,7 +402,7 @@ export async function initializeAccount(role) {
   let commissionRate = '';
   if (role === 'Validator') {
     commissionRate = await input({
-      message: 'Enter commission rate (0-10000)',
+      message: 'Enter Commission Ratio (0-10000):',
       validate: (input) => {
         const number = Number(input);
         if (!Number.isInteger(number) || number < 0 || number > 10000) {
@@ -416,7 +416,7 @@ export async function initializeAccount(role) {
       message: 'Enter Reward Address',
       validate: (input) =>
         /^0x[a-fA-F0-9]{40}$/.test(input) ||
-        'Please enter a valid account name.',
+        'Please enter a valid reward address.',
     });
   }
   const { publicKey } = await generateKeystore(username, role);
