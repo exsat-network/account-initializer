@@ -38,7 +38,7 @@ export const showMenu = async (options?: InitializeAccountOptions) => {
   }
 
   const choice = await select({
-    message: 'Select an option:',
+    message: 'Select an option: ',
     choices: choices.map((choice) => ({
       name: choice.name,
       value: choice.value,
@@ -58,7 +58,7 @@ export const showMenu = async (options?: InitializeAccountOptions) => {
     case '4':
     case '5':
       const role = await select({
-        message: 'Select a role:',
+        message: 'Select a role: ',
         choices: [
           { name: 'Sycnhronizer', value: 'Synchronizer' },
           { name: 'Validator', value: 'Validator' },
@@ -87,10 +87,10 @@ export const showMenu = async (options?: InitializeAccountOptions) => {
       break;
     case '7':
       const username = await input({
-        message: 'Input your username:',
+        message: 'Input your username: ',
       });
       const email = await input({
-        message: 'Input your email:',
+        message: 'Input your email: ',
       });
       await changeEmail(username, email);
       break;

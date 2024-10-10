@@ -8,4 +8,4 @@ export {
   checkUsernameWithBackend,
 } from './accountInitializer';
 export { queryAccount } from './query';
-export { chargeBtcForResource,chargeForRegistry } from './btcResource';
+export { chargeBtcForResource, chargeForRegistry } from './btcResource';

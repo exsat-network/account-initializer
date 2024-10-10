@@ -95,14 +95,14 @@ const chargeBtcForResource = async (encFile) => {
         await submitPayment(txid, username);
     }
     catch (error) {
-        console.error('Error processing the request:', error.message);
+        console.error('Error processing the request: ', error.message);
     }
 };
 exports.chargeBtcForResource = chargeBtcForResource;
 async function chargeForRegistry(username, btcAddress, amount) {
     console.log(`${font_1.Font.fgCyan}${font_1.Font.bright}-----------------------------------------------\n` +
         `· Please send 0.01 BTC to the following BTC address and send the Transaction ID to the system. \n` +
-        `· Once the system receives this BTC, your exSat account (${font_1.Font.reset}${font_1.Font.bright} ${username}.sat ${font_1.Font.fgCyan}) will be officially created on the exSat network. \n` +
+        `· Once the system receives this BTC, your exSat account (${font_1.Font.reset}${font_1.Font.bright} ${username}. sat ${font_1.Font.fgCyan}) will be officially created on the exSat network. \n` +
         `· The BTC you send will be cross-chained to your exSat account and used for subsequent on-chain operations as Gas Fee.\n` +
         `-----------------------------------------------${font_1.Font.reset}`);
     qrcode_terminal_1.default.generate(btcAddress, { small: true });

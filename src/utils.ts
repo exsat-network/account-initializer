@@ -142,7 +142,7 @@ export function isExsatDocker(): boolean {
       return true;
     }
   } catch (err) {
-    console.error('Error checking if running in Docker:', err);
+    console.error('Error checking if running in Docker: ', err);
   }
 
   return false;
@@ -204,7 +204,7 @@ export const selectDirPrompt = async () => {
     ];
   }
   const initialChoice = await select({
-    message: '\nChoose a directory to save the keystore:',
+    message: '\nChoose a directory to save the keystore: ',
     choices: choices,
   });
 

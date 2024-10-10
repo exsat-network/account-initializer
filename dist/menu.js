@@ -29,7 +29,7 @@ const showMenu = async (options) => {
         ];
     }
     const choice = await (0, prompts_1.select)({
-        message: 'Select an option:',
+        message: 'Select an option: ',
         choices: choices.map((choice) => ({
             name: choice.name,
             value: choice.value,
@@ -48,7 +48,7 @@ const showMenu = async (options) => {
         case '4':
         case '5':
             const role = await (0, prompts_1.select)({
-                message: 'Select a role:',
+                message: 'Select a role: ',
                 choices: [
                     { name: 'Sycnhronizer', value: 'Synchronizer' },
                     { name: 'Validator', value: 'Validator' },
@@ -78,10 +78,10 @@ const showMenu = async (options) => {
             break;
         case '7':
             const username = await (0, prompts_1.input)({
-                message: 'Input your username:',
+                message: 'Input your username: ',
             });
             const email = await (0, prompts_1.input)({
-                message: 'Input your email:',
+                message: 'Input your email: ',
             });
             await (0, accountInitializer_1.changeEmail)(username, email);
             break;

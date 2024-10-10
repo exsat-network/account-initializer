@@ -56,7 +56,7 @@ export const queryAccount = async () => {
     }
   } catch (error) {
     if (error instanceof Error) {
-      console.error('Error querying account:', error.message);
+      console.error('Error querying account: ', error.message);
     }
   }
 };

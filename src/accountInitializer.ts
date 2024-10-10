@@ -66,7 +66,7 @@ async function saveKeystore(privateKey, username, role) {
 
   while (passwordInput !== passwordConfirmInput) {
     console.log(
-      `\n${Font.fgYellow}${Font.bright}'Password not match, please try again.'${Font.reset}\n`,
+      `\n${Font.fgYellow}${Font.bright}'Passwords not match, please try again.'${Font.reset}\n`,
     );
     passwordInput = await getPasswordInput(
       'Enter a password to encrypt your private key (at least 6 characters): ',
@@ -106,13 +106,13 @@ async function saveKeystore(privateKey, username, role) {
   updateEnvFile({ [keystoreFileKey]: keystoreFilePath });
 
   console.log(`\n${cmdRedFont('!!!Remember to backup this file!!!')}`);
-  console.log(`${cmdGreenFont(`Saved Successed: ${keystoreFilePath}`)}\n`);
+  console.log(`${cmdGreenFont(`Saved successfully: ${keystoreFilePath}`)}\n`);
   return keystoreFilePath;
 }
 
 async function generateKeystore(username, role) {
   const mnemonic = generateMnemonic(wordlist);
-  console.log(`${cmdYellowFont(`\nYour Seed Phrase: \n${mnemonic}`)}\n`);
+  console.log(`${cmdYellowFont(`\nYour seed phrase: \n${mnemonic}`)}\n`);
   await input({
     message:
       "Please confirm that you have backed up and saved the seed phrase (Input 'yes' after you have saved the seed phrase, and then the seed phrase will be hidden.):",
@@ -141,7 +141,7 @@ async function generateKeystore(username, role) {
 async function importAccountAndSaveKeystore(privateKey) {
   return await retryRequest(async () => {
     const accountName = await input({
-      message: 'Enter your account name (1-8 characters):',
+      message: 'Enter your account name (1-8 characters): ',
     });
     const fullAccountName = accountName.endsWith('.sat')
       ? accountName
@@ -156,7 +156,7 @@ async function importAccountAndSaveKeystore(privateKey) {
 
 async function inputMnemonic() {
   const mnemonic = await inputWithCancel(
-    'Enter Your Seed Phrase (12 words,Input "q" to return):',
+    'Enter your seed phrase (12 words, Input "q" to return): ',
   );
   if (!mnemonic) return false;
   const seed = mnemonicToSeedSync(mnemonic.trim());
@@ -202,7 +202,7 @@ export async function importFromPrivateKey(role) {
   try {
     const success = await retryRequest(async () => {
       const privateKeyInput = await inputWithCancel(
-        'Enter your private key (64 characters,Input "q" to return):',
+        'Enter your private key (64 characters, Input "q" to return): ',
       );
       if (!privateKeyInput) return false;
       privateKey = PrivateKey.from(privateKeyInput);
@@ -270,7 +270,7 @@ async function requestVerificationCode(username, email, type) {
 
     return true;
   } catch (error: any) {
-    console.error('Error requesting verification code:', error.message);
+    console.error('Error requesting verification code: ', error.message);
     return false;
   }
 }
@@ -285,7 +285,7 @@ export async function changeEmail(username, email) {
     );
     return true;
   } catch (error: any) {
-    console.error('Error requesting email change:', error.message);
+    console.error('Error requesting email change: ', error.message);
     return false;
   }
 }
@@ -323,7 +323,7 @@ async function verifyCode(username, email, type) {
         console.error('Verification failed. Please try again.');
       }
     } catch (error: any) {
-      console.error('Error during email verification:', error.message);
+      console.error('Error during email verification: ', error.message);
     }
   }
 
@@ -342,11 +342,11 @@ export async function initializeAccount(role) {
   let registryStatus;
   const username = await input({
     message:
-      'Enter an Account Name (1-8 characters, a-z, 1-5. Input "q" to return): ',
+      'Enter an account name (1-8 characters, a-z, 1-5. Input "q" to return): ',
     validate: async (input) => {
       if (input === 'q') return true;
       if (!validateUsername(input)) {
-        return 'Please enter an Account Name that is 1-8 characters long, contains only a-z and 1-5.';
+        return 'Please enter an account name that is 1-8 characters long, contains only a-z and 1-5.';
       }
       try {
         const response = await checkUsernameWithBackend(input);
@@ -360,12 +360,12 @@ export async function initializeAccount(role) {
             return 'This username is already registered. Please enter another one.';
         }
       } catch (error: any) {
-        return `Request Error:${error.message}`;
+        return `Request error:${error.message}`;
       }
     },
   });
   if (username === 'q') return false;
-  console.log(cmdGreenFont(`  Your Account : ${username}.sat`));
+  console.log(cmdGreenFont(`  Your account : ${username}.sat`));
 
   let email = await input({
     message: 'Enter your email address(for emergency notify): ',
@@ -402,7 +402,7 @@ export async function initializeAccount(role) {
   let commissionRate = '';
   if (role === 'Validator') {
     commissionRate = await input({
-      message: 'Enter Commission Ratio (0-10000):',
+      message: 'Enter commission ratio (0-10000): ',
       validate: (input) => {
         const number = Number(input);
         if (!Number.isInteger(number) || number < 0 || number > 10000) {
@@ -413,7 +413,7 @@ export async function initializeAccount(role) {
     });
 
     rewardAddress = await input({
-      message: 'Enter Reward Address',
+      message: 'Enter reward address',
       validate: (input) =>
         /^0x[a-fA-F0-9]{40}$/.test(input) ||
         'Please enter a valid reward address.',
@@ -439,6 +439,6 @@ export async function initializeAccount(role) {
     await chargeForRegistry(username, btcAddress, amount);
     return username;
   } catch (error: any) {
-    console.error('Error creating account:', error.message);
+    console.error('Error creating account: ', error.message);
   }
 }
