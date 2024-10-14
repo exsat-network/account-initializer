@@ -285,7 +285,7 @@ async function initializeAccount(role) {
                 }
             }
             catch (error) {
-                return `Request error:${error.message}`;
+                return `Request error: ${error.message}`;
             }
         },
     });
@@ -297,7 +297,7 @@ async function initializeAccount(role) {
     });
     let confirmEmail = await (0, prompts_1.input)({ message: 'Confirm your email address: ' });
     while (email !== confirmEmail || !validateEmail(email)) {
-        console.log(`${font_1.Font.fgYellow}${font_1.Font.bright}Email addresses do not match or are invalid. Please enter your email address again.${font_1.Font.reset}`);
+        console.log(`${font_1.Font.fgYellow}${font_1.Font.bright}The email address does not match or is invalid. Please enter your email address again.${font_1.Font.reset}`);
         email = await (0, prompts_1.input)({
             message: 'Enter your email address(for emergency notify): ',
         });

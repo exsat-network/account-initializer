@@ -10,6 +10,11 @@ export declare function inputWithCancel(message: string, validatefn?: (value: st
 export declare function isExsatDocker(): boolean;
 export declare const listDirectories: (currentPath: string) => Promise<string[]>;
 export declare const selectDirPrompt: () => Promise<any>;
+/**
+ * Check if transaction id is 64 digit hexadecimal
+ * @param txid
+ */
+export declare function isValidTxid(txid: string): boolean;
 export declare const cmdGreenFont: (msg: string) => string;
 export declare const cmdRedFont: (msg: string) => string;
 export declare const cmdYellowFont: (msg: string) => string;

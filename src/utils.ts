@@ -192,14 +192,14 @@ export const selectDirPrompt = async () => {
   if (!isExsatDocker()) {
     rootPath = path.resolve(os.homedir() + '/.exsat');
     choices = [
-      { name: `Home Path(path:${rootPath})`, value: '2' },
+      { name: `Home Path(path: ${rootPath})`, value: '2' },
       { name: 'Navigate To Select', value: '1' },
       { name: 'Manually Enter a Directory Path', value: '3' },
     ];
   } else {
     rootPath = path.resolve('/app/.exsat');
     choices = [
-      { name: `Root Path(path:${rootPath})`, value: '2' },
+      { name: `Root Path(path: ${rootPath})`, value: '2' },
       { name: 'Manually Enter a Directory Path', value: '3' },
     ];
   }
@@ -274,6 +274,20 @@ export const selectDirPrompt = async () => {
     return selectedPath;
   }
 };
+
+/**
+ * Check if transaction id is 64 digit hexadecimal
+ * @param txid
+ */
+export function isValidTxid(txid: string): boolean {
+  // Check if the length is 64
+  if (txid.length !== 64) {
+    return false;
+  }
+  // Check if it is hexadecimal
+  const hexRegex = /^[0-9a-fA-F]+$/;
+  return hexRegex.test(txid);
+}
 
 export const cmdGreenFont = (msg: string) => {
   return `\x1b[32m${msg}\x1b[0m`;

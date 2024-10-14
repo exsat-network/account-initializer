@@ -360,7 +360,7 @@ export async function initializeAccount(role) {
             return 'This username is already registered. Please enter another one.';
         }
       } catch (error: any) {
-        return `Request error:${error.message}`;
+        return `Request error: ${error.message}`;
       }
     },
   });
@@ -374,7 +374,7 @@ export async function initializeAccount(role) {
 
   while (email !== confirmEmail || !validateEmail(email)) {
     console.log(
-      `${Font.fgYellow}${Font.bright}Email addresses do not match or are invalid. Please enter your email address again.${Font.reset}`,
+      `${Font.fgYellow}${Font.bright}The email address does not match or is invalid. Please enter your email address again.${Font.reset}`,
     );
     email = await input({
       message: 'Enter your email address(for emergency notify): ',

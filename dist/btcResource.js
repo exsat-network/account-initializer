@@ -26,7 +26,7 @@ const getKeystore = async (encFile) => {
 const getAccountInfo = async (publicKey) => {
     const account = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.post('/api/users/my', { publicKey }));
     if (account.data.status === 'success') {
-        console.log(`\n${font_1.Font.fgCyan}${font_1.Font.bright}Account:${font_1.Font.reset}${font_1.Font.bright} ${account.data.info.username}${font_1.Font.reset}\n`);
+        console.log(`\n${font_1.Font.fgCyan}${font_1.Font.bright}Account: ${font_1.Font.reset}${font_1.Font.bright} ${account.data.info.username}${font_1.Font.reset}\n`);
         return account.data.info.username;
     }
     else {
@@ -70,10 +70,10 @@ const submitPayment = async (txid, username) => {
     }
 };
 const displayQrCode = (btcAddress, network) => {
-    console.log(`${font_1.Font.fgCyan}${font_1.Font.bright}-----------------------------------------------\nPlease send BTC to the following address:${font_1.Font.reset}`);
+    console.log(`${font_1.Font.fgCyan}${font_1.Font.bright}-----------------------------------------------\nPlease send BTC to the following address: ${font_1.Font.reset}`);
     qrcode_terminal_1.default.generate(btcAddress, { small: true });
-    console.log(`${font_1.Font.bright}${font_1.Font.fgCyan}BTC Address：${font_1.Font.reset}${font_1.Font.bright}${btcAddress}\n` +
-        `${font_1.Font.fgCyan}Network:${font_1.Font.reset}${font_1.Font.bright}${network}\n` +
+    console.log(`${font_1.Font.bright}${font_1.Font.fgCyan}BTC Address: ${font_1.Font.reset}${font_1.Font.bright}${btcAddress}\n` +
+        `${font_1.Font.fgCyan}Network: ${font_1.Font.reset}${font_1.Font.bright}${network}\n` +
         `${font_1.Font.fgCyan}-----------------------------------------------${font_1.Font.reset}`);
 };
 const chargeBtcForResource = async (encFile) => {
@@ -107,14 +107,14 @@ async function chargeForRegistry(username, btcAddress, amount) {
         `-----------------------------------------------${font_1.Font.reset}`);
     qrcode_terminal_1.default.generate(btcAddress, { small: true });
     const networkResponse = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.get('/api/config/exsat_config'));
-    console.log(`${font_1.Font.fgCyan}${font_1.Font.bright}BTC Address：${font_1.Font.reset}${font_1.Font.bright}${btcAddress}\n` +
-        `${font_1.Font.fgCyan}Network:${font_1.Font.reset}${font_1.Font.bright}${networkResponse.data.info.btc_network}\n` +
+    console.log(`${font_1.Font.fgCyan}${font_1.Font.bright}BTC Address: ${font_1.Font.reset}${font_1.Font.bright}${btcAddress}\n` +
+        `${font_1.Font.fgCyan}Network: ${font_1.Font.reset}${font_1.Font.bright}${networkResponse.data.info.btc_network}\n` +
         `${font_1.Font.fgCyan}-----------------------------------------------${font_1.Font.reset}`);
     let response;
     const txid = await (0, prompts_1.input)({
         message: `Enter the transaction ID after sending BTC: `,
         validate: async (input) => {
-            if (input.length > 64) {
+            if ((0, utils_1.isValidTxid)(input)) {
                 return 'Invalid transaction ID.';
             }
             try {

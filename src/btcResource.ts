@@ -1,4 +1,10 @@
-import { axiosInstance, keystoreExist, retryRequest } from './utils';
+import {
+  axiosInstance,
+  inputWithCancel,
+  isValidTxid,
+  keystoreExist,
+  retryRequest,
+} from './utils';
 import { MIN_BTC_AMOUNT } from './constants';
 import qrcode from 'qrcode-terminal';
 import { readFileSync } from 'fs';
@@ -27,7 +33,7 @@ const getAccountInfo = async (publicKey) => {
 
   if (account.data.status === 'success') {
     console.log(
-      `\n${Font.fgCyan}${Font.bright}Account:${Font.reset}${Font.bright} ${account.data.info.username}${Font.reset}\n`,
+      `\n${Font.fgCyan}${Font.bright}Account: ${Font.reset}${Font.bright} ${account.data.info.username}${Font.reset}\n`,
     );
     return account.data.info.username;
   } else {
@@ -84,12 +90,12 @@ const submitPayment = async (txid, username) => {
 
 const displayQrCode = (btcAddress, network) => {
   console.log(
-    `${Font.fgCyan}${Font.bright}-----------------------------------------------\nPlease send BTC to the following address:${Font.reset}`,
+    `${Font.fgCyan}${Font.bright}-----------------------------------------------\nPlease send BTC to the following address: ${Font.reset}`,
   );
   qrcode.generate(btcAddress, { small: true });
   console.log(
-    `${Font.bright}${Font.fgCyan}BTC Address：${Font.reset}${Font.bright}${btcAddress}\n` +
-      `${Font.fgCyan}Network:${Font.reset}${Font.bright}${network}\n` +
+    `${Font.bright}${Font.fgCyan}BTC Address: ${Font.reset}${Font.bright}${btcAddress}\n` +
+      `${Font.fgCyan}Network: ${Font.reset}${Font.bright}${network}\n` +
       `${Font.fgCyan}-----------------------------------------------${Font.reset}`,
   );
 };
@@ -140,8 +146,8 @@ export async function chargeForRegistry(username, btcAddress, amount) {
   );
 
   console.log(
-    `${Font.fgCyan}${Font.bright}BTC Address：${Font.reset}${Font.bright}${btcAddress}\n` +
-      `${Font.fgCyan}Network:${Font.reset}${Font.bright}${networkResponse.data.info.btc_network}\n` +
+    `${Font.fgCyan}${Font.bright}BTC Address: ${Font.reset}${Font.bright}${btcAddress}\n` +
+      `${Font.fgCyan}Network: ${Font.reset}${Font.bright}${networkResponse.data.info.btc_network}\n` +
       `${Font.fgCyan}-----------------------------------------------${Font.reset}`,
   );
 
@@ -149,7 +155,7 @@ export async function chargeForRegistry(username, btcAddress, amount) {
   const txid = await input({
     message: `Enter the transaction ID after sending BTC: `,
     validate: async (input) => {
-      if (input.length > 64) {
+      if (isValidTxid(input)) {
         return 'Invalid transaction ID.';
       }
 
