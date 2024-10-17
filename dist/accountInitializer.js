@@ -56,9 +56,9 @@ async function saveKeystore(privateKey, username, role) {
     }
     // Continue with the rest of the keystore saving logic
     const keystore = await (0, web3_1.createKeystore)(`${(0, web3_utils_1.bytesToHex)(wif_1.default.decode(privateKey.toWif(), 128).privateKey)}`, passwordInput, username);
-    if (await (0, prompts_1.confirm)({ message: 'Do you want to save the password in the .env file?' })) {
-        process.env[`${role.toUpperCase()}_KEYSTORE_PASSWORD`] = passwordInput;
-    }
+    const savePassword = await (0, prompts_1.confirm)({
+        message: 'Do you want to save the password in the .env file?',
+    });
     console.log(`\n${font_1.Font.fgCyan}${font_1.Font.bright}Keystore created successfully.${font_1.Font.reset}\n`);
     let selectedPath;
     let pathConfirm = 'yes';
@@ -75,7 +75,13 @@ async function saveKeystore(privateKey, username, role) {
     const keystoreFilePath = `${selectedPath}/${username}_keystore.json`;
     (0, fs_1.writeFileSync)(keystoreFilePath, JSON.stringify(keystore));
     const keystoreFileKey = `${role.toUpperCase()}_KEYSTORE_FILE`;
-    (0, utils_1.updateEnvFile)({ [keystoreFileKey]: keystoreFilePath });
+    const updateDatas = {
+        [keystoreFileKey]: keystoreFilePath,
+        [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword
+            ? passwordInput
+            : '',
+    };
+    (0, utils_1.updateEnvFile)(updateDatas);
     console.log(`\n${(0, utils_1.cmdRedFont)('!!!Remember to backup this file!!!')}`);
     console.log(`${(0, utils_1.cmdGreenFont)(`Saved successfully: ${keystoreFilePath}`)}\n`);
     return keystoreFilePath;

@@ -19,7 +19,7 @@ import {
 import { createKeystore } from './web3';
 import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
-import { input, select, password,confirm } from '@inquirer/prompts';
+import { input, select, password, confirm } from '@inquirer/prompts';
 import { chargeForRegistry } from './btcResource';
 import { Font } from './font';
 
@@ -80,9 +80,9 @@ async function saveKeystore(privateKey, username, role) {
     passwordInput,
     username,
   );
-  if( await confirm({message:'Do you want to save the password in the .env file?'})){
-    process.env[`${role.toUpperCase()}_KEYSTORE_PASSWORD`] = passwordInput;
-  }
+  const savePassword = await confirm({
+    message: 'Do you want to save the password in the .env file?',
+  });
   console.log(
     `\n${Font.fgCyan}${Font.bright}Keystore created successfully.${Font.reset}\n`,
   );
@@ -105,7 +105,13 @@ async function saveKeystore(privateKey, username, role) {
   writeFileSync(keystoreFilePath, JSON.stringify(keystore));
 
   const keystoreFileKey = `${role.toUpperCase()}_KEYSTORE_FILE`;
-  updateEnvFile({ [keystoreFileKey]: keystoreFilePath });
+  const updateDatas = {
+    [keystoreFileKey]: keystoreFilePath,
+    [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword
+      ? passwordInput
+      : '',
+  };
+  updateEnvFile(updateDatas);
 
   console.log(`\n${cmdRedFont('!!!Remember to backup this file!!!')}`);
   console.log(`${cmdGreenFont(`Saved successfully: ${keystoreFilePath}`)}\n`);
