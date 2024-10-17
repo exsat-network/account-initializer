@@ -1,6 +1,5 @@
 import {
   axiosInstance,
-  inputWithCancel,
   isValidTxid,
   keystoreExist,
   retryRequest,
@@ -155,7 +154,7 @@ export async function chargeForRegistry(username, btcAddress, amount) {
   const txid = await input({
     message: `Enter the transaction ID after sending BTC: `,
     validate: async (input) => {
-      if (isValidTxid(input)) {
+      if (!isValidTxid(input)) {
         return 'Invalid transaction ID.';
       }
 
