@@ -1,7 +1,7 @@
 export declare function checkUsernameWithBackend(username: any): Promise<any>;
 export declare function importFromMnemonic(role: any): Promise<any>;
 export declare function importFromPrivateKey(role: any): Promise<any>;
-export declare function processAccount({ accountName, pubkey, status, btcAddress, amount, }: {
+export declare function processAccount({ accountName, pubkey, status, btcAddress, amount }: {
     accountName: any;
     pubkey: any;
     status: any;
