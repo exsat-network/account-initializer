@@ -133,7 +133,7 @@ export async function chargeForRegistry(username, btcAddress, amount) {
   console.log(
     `${Font.fgCyan}${Font.bright}-----------------------------------------------\n` +
       `· Please send 0.01 BTC to the following BTC address and send the Transaction ID to the system. \n` +
-      `· Once the system receives this BTC, your exSat account (${Font.reset}${Font.bright} ${username}.sat ${Font.fgCyan}) will be officially created on the exSat network. \n` +
+      `· Once the system receives this BTC, your exSat account (${Font.reset}${Font.bright} ${username.endsWith('.sat')?username:`${username}.sat 0-df`} ${Font.fgCyan}) will be officially created on the exSat network. \n` +
       `· The BTC you send will be cross-chained to your exSat account and used for subsequent on-chain operations as Gas Fee.\n` +
       `-----------------------------------------------${Font.reset}`,
   );

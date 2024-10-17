@@ -19,7 +19,7 @@ import {
 import { createKeystore } from './web3';
 import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
-import { input, select, password } from '@inquirer/prompts';
+import { input, select, password,confirm } from '@inquirer/prompts';
 import { chargeForRegistry } from './btcResource';
 import { Font } from './font';
 
@@ -80,7 +80,9 @@ async function saveKeystore(privateKey, username, role) {
     passwordInput,
     username,
   );
-  process.env[`${role.toUpperCase()}_KEYSTORE_PASSWORD`] = passwordInput;
+  if( await confirm({message:'Do you want to save the password in the .env file?'})){
+    process.env[`${role.toUpperCase()}_KEYSTORE_PASSWORD`] = passwordInput;
+  }
   console.log(
     `\n${Font.fgCyan}${Font.bright}Keystore created successfully.${Font.reset}\n`,
   );

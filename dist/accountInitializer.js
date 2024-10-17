@@ -56,7 +56,9 @@ async function saveKeystore(privateKey, username, role) {
     }
     // Continue with the rest of the keystore saving logic
     const keystore = await (0, web3_1.createKeystore)(`${(0, web3_utils_1.bytesToHex)(wif_1.default.decode(privateKey.toWif(), 128).privateKey)}`, passwordInput, username);
-    process.env[`${role.toUpperCase()}_KEYSTORE_PASSWORD`] = passwordInput;
+    if (await (0, prompts_1.confirm)({ message: 'Do you want to save the password in the .env file?' })) {
+        process.env[`${role.toUpperCase()}_KEYSTORE_PASSWORD`] = passwordInput;
+    }
     console.log(`\n${font_1.Font.fgCyan}${font_1.Font.bright}Keystore created successfully.${font_1.Font.reset}\n`);
     let selectedPath;
     let pathConfirm = 'yes';
