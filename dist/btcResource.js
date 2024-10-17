@@ -114,7 +114,7 @@ async function chargeForRegistry(username, btcAddress, amount) {
     const txid = await (0, prompts_1.input)({
         message: `Enter the transaction ID after sending BTC: `,
         validate: async (input) => {
-            if ((0, utils_1.isValidTxid)(input)) {
+            if (!(0, utils_1.isValidTxid)(input)) {
                 return 'Invalid transaction ID.';
             }
             try {
