@@ -67,8 +67,7 @@ async function saveKeystore(privateKey, username, role) {
         if ((0, utils_1.isExsatDocker)()) {
             pathConfirm = await (0, prompts_1.input)({
                 message: `Please ensure that the save path you set ( ${selectedPath} ) matches the Docker mapping path. Otherwise, your keystore file may be lost. ( Enter "yes" to continue, or "no" to go back to the previous step ):`,
-                validate: (input) => ['yes', 'no'].includes(input.toLowerCase()) ||
-                    'Please input "yes" or "no".',
+                validate: (input) => ['yes', 'no'].includes(input.toLowerCase()) || 'Please input "yes" or "no".',
             });
         }
     } while (pathConfirm.toLowerCase() === 'no');
@@ -77,9 +76,7 @@ async function saveKeystore(privateKey, username, role) {
     const keystoreFileKey = `${role.toUpperCase()}_KEYSTORE_FILE`;
     const updateDatas = {
         [keystoreFileKey]: keystoreFilePath,
-        [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword
-            ? passwordInput
-            : '',
+        [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword ? passwordInput : '',
     };
     (0, utils_1.updateEnvFile)(updateDatas);
     console.log(`\n${(0, utils_1.cmdRedFont)('!!!Remember to backup this file!!!')}`);
@@ -108,9 +105,7 @@ async function importAccountAndSaveKeystore(privateKey) {
         const accountName = await (0, prompts_1.input)({
             message: 'Enter your account name (1-8 characters): ',
         });
-        const fullAccountName = accountName.endsWith('.sat')
-            ? accountName
-            : `${accountName}.sat`;
+        const fullAccountName = accountName.endsWith('.sat') ? accountName : `${accountName}.sat`;
         const accountInfo = await checkUsernameWithBackend(fullAccountName);
         if (privateKey.toPublic().toString() === accountInfo.pubkey) {
             return { accountName, ...accountInfo };
@@ -177,7 +172,7 @@ async function importFromPrivateKey(role) {
     return await processAccount(account);
 }
 exports.importFromPrivateKey = importFromPrivateKey;
-async function processAccount({ accountName, pubkey, status, btcAddress, amount, }) {
+async function processAccount({ accountName, pubkey, status, btcAddress, amount }) {
     const manageMessage = `-----------------------------------------------
    Account: ${accountName}
    Public Key: ${pubkey}
@@ -238,9 +233,7 @@ async function verifyCode(username, email, type) {
     for (let attempts = 0; attempts < 3; attempts++) {
         const verificationCode = await (0, prompts_1.input)({
             message: 'Enter the verification code sent to your email: ',
-            validate: (input) => input.length >= 6 && /^\d+$/.test(input)
-                ? true
-                : 'Password must be at least 6 digits and contain only digits.',
+            validate: (input) => (input.length >= 6 && /^\d+$/.test(input) ? true : 'Password must be at least 6 digits and contain only digits.'),
         });
         try {
             const verifyCodeResponse = await utils_1.axiosInstance.post('/api/users/verify-code', {
@@ -249,8 +242,7 @@ async function verifyCode(username, email, type) {
                 email,
                 code: verificationCode,
             });
-            if (verifyCodeResponse.data.status === 'success' &&
-                verifyCodeResponse.data.valid) {
+            if (verifyCodeResponse.data.status === 'success' && verifyCodeResponse.data.valid) {
                 console.log(`${font_1.Font.fgCyan}${font_1.Font.bright}Email verification successful.${font_1.Font.reset}`);
                 return true;
             }
@@ -325,19 +317,19 @@ async function initializeAccount(role) {
     let commissionRate = '';
     if (role === 'Validator') {
         commissionRate = await (0, prompts_1.input)({
-            message: 'Enter commission ratio (0-10000): ',
+            message: 'Enter commission ratio (0.00-100.00): ',
             validate: (input) => {
-                const number = Number(input);
-                if (!Number.isInteger(number) || number < 0 || number > 10000) {
-                    return 'Please enter a valid integer between 0 and 10000.';
+                const num = parseFloat(input);
+                // Check if it is a valid number and within the range
+                if (!isNaN(num) && num >= 0 && num <= 100 && /^\d+(\.\d{1,2})?$/.test(input)) {
+                    return true;
                 }
-                return true;
+                return 'Please enter a valid number between 0.00 and 100.00';
             },
         });
         rewardAddress = await (0, prompts_1.input)({
             message: 'Enter reward address',
-            validate: (input) => /^0x[a-fA-F0-9]{40}$/.test(input) ||
-                'Please enter a valid reward address.',
+            validate: (input) => /^0x[a-fA-F0-9]{40}$/.test(input) || 'Please enter a valid reward address.',
         });
     }
     const { publicKey } = await generateKeystore(username, role);
@@ -350,7 +342,7 @@ async function initializeAccount(role) {
             email,
             info: infoJson,
             rewardAddress,
-            commissionRate: commissionRate ? Number(commissionRate) : 0,
+            commissionRate: commissionRate ? parseFloat(commissionRate) * 100 : 0,
         }));
         if (response.data.status === 'error')
             throw new Error(response.data.message);
