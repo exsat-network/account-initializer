@@ -24,7 +24,9 @@ const getAccountInfo = async (publicKey) => {
   const account = await retryRequest(() => axiosInstance.post('/api/users/my', { publicKey }));
 
   if (account.data.status === 'success') {
-    console.log(`\n${Font.fgCyan}${Font.bright}Account: ${Font.reset}${Font.bright} ${account.data.info.username}${Font.reset}\n`);
+    console.log(
+      `\n${Font.fgCyan}${Font.bright}Account: ${Font.reset}${Font.bright} ${account.data.info.username}${Font.reset}\n`,
+    );
     return account.data.info.username;
   } else {
     console.log(`${Font.fgYellow}${Font.bright}Account not found for publicKey: ${publicKey}${Font.reset}`);
@@ -77,7 +79,9 @@ const submitPayment = async (txid, username) => {
 };
 
 const displayQrCode = (btcAddress, network) => {
-  console.log(`${Font.fgCyan}${Font.bright}-----------------------------------------------\nPlease send BTC to the following address: ${Font.reset}`);
+  console.log(
+    `${Font.fgCyan}${Font.bright}-----------------------------------------------\nPlease send BTC to the following address: ${Font.reset}`,
+  );
   qrcode.generate(btcAddress, { small: true });
   console.log(
     `${Font.bright}${Font.fgCyan}BTC Address: ${Font.reset}${Font.bright}${btcAddress}\n` +
