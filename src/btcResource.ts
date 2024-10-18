@@ -1,9 +1,4 @@
-import {
-  axiosInstance,
-  isValidTxid,
-  keystoreExist,
-  retryRequest,
-} from './utils';
+import { axiosInstance, isValidTxid, keystoreExist, retryRequest } from './utils';
 import { MIN_BTC_AMOUNT } from './constants';
 import qrcode from 'qrcode-terminal';
 import { readFileSync } from 'fs';
@@ -26,9 +21,7 @@ const getKeystore = async (encFile?) => {
 };
 
 const getAccountInfo = async (publicKey) => {
-  const account = await retryRequest(() =>
-    axiosInstance.post('/api/users/my', { publicKey }),
-  );
+  const account = await retryRequest(() => axiosInstance.post('/api/users/my', { publicKey }));
 
   if (account.data.status === 'success') {
     console.log(
@@ -36,9 +29,7 @@ const getAccountInfo = async (publicKey) => {
     );
     return account.data.info.username;
   } else {
-    console.log(
-      `${Font.fgYellow}${Font.bright}Account not found for publicKey: ${publicKey}${Font.reset}`,
-    );
+    console.log(`${Font.fgYellow}${Font.bright}Account not found for publicKey: ${publicKey}${Font.reset}`);
     return null;
   }
 };
@@ -113,9 +104,7 @@ export const chargeBtcForResource = async (encFile?) => {
 
     const { btcAddress, amount } = paymentInfo;
 
-    const networkResponse = await retryRequest(() =>
-      axiosInstance.get('/api/config/exsat_config'),
-    );
+    const networkResponse = await retryRequest(() => axiosInstance.get('/api/config/exsat_config'));
 
     displayQrCode(btcAddress, networkResponse.data.info.btc_network);
 
@@ -133,16 +122,14 @@ export async function chargeForRegistry(username, btcAddress, amount) {
   console.log(
     `${Font.fgCyan}${Font.bright}-----------------------------------------------\n` +
       `· Please send 0.01 BTC to the following BTC address and send the Transaction ID to the system. \n` +
-      `· Once the system receives this BTC, your exSat account (${Font.reset}${Font.bright} ${username}. sat ${Font.fgCyan}) will be officially created on the exSat network. \n` +
+      `· Once the system receives this BTC, your exSat account (${Font.reset}${Font.bright} ${username.endsWith('.sat') ? username : `${username}.sat`} ${Font.fgCyan}) will be officially created on the exSat network. \n` +
       `· The BTC you send will be cross-chained to your exSat account and used for subsequent on-chain operations as Gas Fee.\n` +
       `-----------------------------------------------${Font.reset}`,
   );
 
   qrcode.generate(btcAddress, { small: true });
 
-  const networkResponse = await retryRequest(() =>
-    axiosInstance.get('/api/config/exsat_config'),
-  );
+  const networkResponse = await retryRequest(() => axiosInstance.get('/api/config/exsat_config'));
 
   console.log(
     `${Font.fgCyan}${Font.bright}BTC Address: ${Font.reset}${Font.bright}${btcAddress}\n` +
