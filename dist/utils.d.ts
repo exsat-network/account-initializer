@@ -15,6 +15,7 @@ export declare const selectDirPrompt: () => Promise<any>;
  * @param txid
  */
 export declare function isValidTxid(txid: string): boolean;
+export declare function capitalizeFirstLetter(str: string): string;
 export declare const cmdGreenFont: (msg: string) => string;
 export declare const cmdRedFont: (msg: string) => string;
 export declare const cmdYellowFont: (msg: string) => string;

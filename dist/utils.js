@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.isValidTxid = exports.selectDirPrompt = exports.listDirectories = exports.isExsatDocker = exports.inputWithCancel = exports.updateEnvFile = exports.clearLines = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = exports.keystoreExist = void 0;
+exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.capitalizeFirstLetter = exports.isValidTxid = exports.selectDirPrompt = exports.listDirectories = exports.isExsatDocker = exports.inputWithCancel = exports.updateEnvFile = exports.clearLines = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = exports.keystoreExist = void 0;
 const axios_1 = __importDefault(require("axios"));
 const constants_1 = require("./constants");
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -37,9 +37,8 @@ const node_util_1 = require("node:util");
 const os = __importStar(require("node:os"));
 function keystoreExist(role) {
     if (role) {
-        const keystoreFileKey = role.toLowerCase() + '_KEYSTORE_FILE';
-        if (process.env[keystoreFileKey] &&
-            fs_extra_1.default.existsSync(process.env[keystoreFileKey] ?? '')) {
+        const keystoreFileKey = role.toUpperCase() + '_KEYSTORE_FILE';
+        if (process.env[keystoreFileKey] && fs_extra_1.default.existsSync(process.env[keystoreFileKey] ?? '')) {
             return process.env[keystoreFileKey];
         }
     }
@@ -100,7 +99,13 @@ function clearLines(numLines) {
 }
 exports.clearLines = clearLines;
 function updateEnvFile(values) {
-    const envFilePath = '.env';
+    let envFilePath;
+    if (isExsatDocker()) {
+        envFilePath = path_1.default.join(process.cwd(), '.exsat', '.env');
+    }
+    else {
+        envFilePath = path_1.default.join(process.cwd(), '.env');
+    }
     if (!fs_extra_1.default.existsSync(envFilePath)) {
         fs_extra_1.default.writeFileSync(envFilePath, '');
     }
@@ -294,6 +299,13 @@ function isValidTxid(txid) {
     return hexRegex.test(txid);
 }
 exports.isValidTxid = isValidTxid;
+function capitalizeFirstLetter(str) {
+    if (!str)
+        return str;
+    const [first, ...rest] = str;
+    return `${first.toUpperCase()}${rest.join('')}`;
+}
+exports.capitalizeFirstLetter = capitalizeFirstLetter;
 const cmdGreenFont = (msg) => {
     return `\x1b[32m${msg}\x1b[0m`;
 };

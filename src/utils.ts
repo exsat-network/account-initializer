@@ -9,11 +9,8 @@ import * as os from 'node:os';
 
 export function keystoreExist(role?: string) {
   if (role) {
-    const keystoreFileKey = role.toLowerCase() + '_KEYSTORE_FILE';
-    if (
-      process.env[keystoreFileKey] &&
-      fs.existsSync(process.env[keystoreFileKey] ?? '')
-    ) {
+    const keystoreFileKey = role.toUpperCase() + '_KEYSTORE_FILE';
+    if (process.env[keystoreFileKey] && fs.existsSync(process.env[keystoreFileKey] ?? '')) {
       return process.env[keystoreFileKey];
     }
   }
@@ -53,10 +50,7 @@ export const axiosInstance = axios.create({
   },
 });
 
-export const retryRequest = async (
-  fn: () => Promise<any>,
-  retries = 3,
-): Promise<any> => {
+export const retryRequest = async (fn: () => Promise<any>, retries = 3): Promise<any> => {
   for (let i = 0; i < retries; i++) {
     try {
       return await fn();
@@ -76,7 +70,12 @@ export function clearLines(numLines: number) {
 }
 
 export function updateEnvFile(values) {
-  const envFilePath = '.env';
+  let envFilePath;
+  if (isExsatDocker()) {
+    envFilePath = path.join(process.cwd(), '.exsat', '.env');
+  } else {
+    envFilePath = path.join(process.cwd(), '.env');
+  }
   if (!fs.existsSync(envFilePath)) {
     fs.writeFileSync(envFilePath, '');
   }
@@ -150,9 +149,7 @@ export function isExsatDocker(): boolean {
 
 export const listDirectories = async (currentPath: string) => {
   const files = await fs.readdir(currentPath);
-  const directories = files.filter((file) =>
-    fs.statSync(path.join(currentPath, file)).isDirectory(),
-  );
+  const directories = files.filter((file) => fs.statSync(path.join(currentPath, file)).isDirectory());
   directories.unshift('..'); // Add parent directory option
   directories.unshift('.'); // Add current directory option
   return directories;
@@ -223,9 +220,7 @@ export const selectDirPrompt = async () => {
       } catch (error) {
         attempts++;
         if (attempts < maxAttempts) {
-          console.log(
-            'Invalid directory path or insufficient permissions. Please try again.',
-          );
+          console.log('Invalid directory path or insufficient permissions. Please try again.');
         } else {
           console.log('Maximum retry attempts reached. Exiting.');
           throw error;
@@ -287,6 +282,11 @@ export function isValidTxid(txid: string): boolean {
   // Check if it is hexadecimal
   const hexRegex = /^[0-9a-fA-F]+$/;
   return hexRegex.test(txid);
+}
+export function capitalizeFirstLetter(str: string): string {
+  if (!str) return str;
+  const [first, ...rest] = str;
+  return `${first.toUpperCase()}${rest.join('')}`;
 }
 
 export const cmdGreenFont = (msg: string) => {

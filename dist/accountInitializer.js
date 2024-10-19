@@ -233,7 +233,7 @@ async function verifyCode(username, email, type) {
     for (let attempts = 0; attempts < 3; attempts++) {
         const verificationCode = await (0, prompts_1.input)({
             message: 'Enter the verification code sent to your email: ',
-            validate: (input) => (input.length >= 6 && /^\d+$/.test(input) ? true : 'Password must be at least 6 digits and contain only digits.'),
+            validate: (input) => input.length >= 6 && /^\d+$/.test(input) ? true : 'Password must be at least 6 digits and contain only digits.',
         });
         try {
             const verifyCodeResponse = await utils_1.axiosInstance.post('/api/users/verify-code', {
@@ -258,6 +258,7 @@ async function verifyCode(username, email, type) {
     return false;
 }
 async function initializeAccount(role) {
+    role = (0, utils_1.capitalizeFirstLetter)(role);
     const keystoreFile = (0, utils_1.keystoreExist)(role);
     if (keystoreFile) {
         console.log(`\n${font_1.Font.fgYellow}${font_1.Font.bright}An account has already been created in ${keystoreFile}.${font_1.Font.reset}`);
