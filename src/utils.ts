@@ -92,7 +92,7 @@ export function updateEnvFile(values) {
   // Build updated .env file contents, preserving comments and structure
   const updatedLines = originalEnvContent.split('\n').map((line) => {
     const [key] = line.split('=');
-    if (key && envConfig[key.trim()]) {
+    if (key && envConfig.hasOwnProperty(key)) {
       return `${key}=${envConfig[key.trim()]}`;
     }
     return line;

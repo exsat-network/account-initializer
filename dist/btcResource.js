@@ -35,15 +35,12 @@ const getAccountInfo = async (publicKey) => {
     }
 };
 const getBtcAmount = async () => {
-    return await (0, prompts_1.input)({
-        message: `Enter the amount of BTC to bridge (at least ${constants_1.MIN_BTC_AMOUNT} BTC): `,
-        validate: (input) => {
-            const amount = parseFloat(input);
-            if (isNaN(amount) || amount < constants_1.MIN_BTC_AMOUNT) {
-                return `Amount must be at least ${constants_1.MIN_BTC_AMOUNT} BTC. Please try again.`;
-            }
-            return true;
-        },
+    return await (0, utils_1.inputWithCancel)(`Enter the amount of BTC to bridge (at least ${constants_1.MIN_BTC_AMOUNT} BTC, Input "q" to return.): `, (input) => {
+        const amount = parseFloat(input);
+        if (isNaN(amount) || amount < constants_1.MIN_BTC_AMOUNT) {
+            return `Amount must be at least ${constants_1.MIN_BTC_AMOUNT} BTC. Please try again.`;
+        }
+        return true;
     });
 };
 const createPayment = async (username, amount) => {
@@ -83,9 +80,11 @@ const chargeBtcForResource = async (encFile) => {
         if (!username)
             return;
         const amountInput = await getBtcAmount();
+        if (!amountInput)
+            return false;
         const paymentInfo = await createPayment(username, amountInput);
         if (!paymentInfo)
-            return;
+            return false;
         const { btcAddress, amount } = paymentInfo;
         const networkResponse = await (0, utils_1.retryRequest)(() => utils_1.axiosInstance.get('/api/config/exsat_config'));
         displayQrCode(btcAddress, networkResponse.data.info.btc_network);
@@ -93,9 +92,11 @@ const chargeBtcForResource = async (encFile) => {
             message: 'Enter the transaction ID after sending BTC: ',
         });
         await submitPayment(txid, username);
+        return true;
     }
     catch (error) {
         console.error('Error processing the request: ', error.message);
+        return false;
     }
 };
 exports.chargeBtcForResource = chargeBtcForResource;
