@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.chargeForRegistry = exports.chargeBtcForResource = exports.queryAccount = exports.changeEmail = exports.checkUsernameWithBackend = exports.processAccount = exports.initializeAccount = exports.importFromPrivateKey = exports.importFromMnemonic = exports.decryptKeystore = void 0;
+exports.chargeForRegistry = exports.chargeBtcForResource = exports.queryAccount = exports.changeEmail = exports.checkUsernameWithBackend = exports.processAccount = exports.initializeAccount = exports.importFromPrivateKey = exports.importFromMnemonic = exports.decryptKeystore = exports.updateEnvFile = exports.clearLines = void 0;
+var utils_1 = require("./utils");
+Object.defineProperty(exports, "clearLines", { enumerable: true, get: function () { return utils_1.clearLines; } });
+Object.defineProperty(exports, "updateEnvFile", { enumerable: true, get: function () { return utils_1.updateEnvFile; } });
 var web3_1 = require("./web3");
 Object.defineProperty(exports, "decryptKeystore", { enumerable: true, get: function () { return web3_1.decryptKeystore; } });
 var accountInitializer_1 = require("./accountInitializer");
