@@ -5,6 +5,7 @@ export {
   initializeAccount,
   processAccount,
   checkUsernameWithBackend,
+  changeEmail,
 } from './accountInitializer';
 export { queryAccount } from './query';
 export { chargeBtcForResource, chargeForRegistry } from './btcResource';
