@@ -134,7 +134,7 @@ export const createKeystore = async (
     kdfparams = {
       dklen: options?.dklen ?? 32,
       salt: bytesToHex(salt).replace('0x', ''),
-      c: options?.c ?? 262144,
+      c: options?.c ?? 600000 ,
       prf: 'hmac-sha256',
     };
 
