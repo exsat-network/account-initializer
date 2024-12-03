@@ -138,7 +138,7 @@ export const createKeystore = async (
       prf: 'hmac-sha256',
     };
 
-    if (kdfparams.c < 1000) {
+    if (kdfparams.c < 100000) {
       // error when c < 1000, pbkdf2 is less secure with less iterations
       throw new PBKDF2IterationsError();
     }
