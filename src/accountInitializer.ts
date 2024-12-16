@@ -13,6 +13,7 @@ import {
   inputWithCancel,
   isExsatDocker,
   keystoreExist,
+  processAndUpdateString,
   retryRequest,
   selectDirPrompt,
   updateEnvFile,
@@ -92,12 +93,12 @@ async function saveKeystore(privateKey, username, role) {
   } while (pathConfirm.toLowerCase() === 'no');
 
   const keystoreFilePath = `${selectedPath}/${username}_keystore.json`;
-  writeFileSync(keystoreFilePath, JSON.stringify(keystore));
+  writeFileSync(keystoreFilePath, JSON.stringify(keystore), { mode: 0o644 });
 
   const keystoreFileKey = `${role.toUpperCase()}_KEYSTORE_FILE`;
   const updateDatas = {
     [keystoreFileKey]: keystoreFilePath,
-    [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword ? passwordInput : '',
+    [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword ? processAndUpdateString(passwordInput) : '',
   };
   updateEnvFile(updateDatas);
 

@@ -283,6 +283,36 @@ export function isValidTxid(txid: string): boolean {
   const hexRegex = /^[0-9a-fA-F]+$/;
   return hexRegex.test(txid);
 }
+
+// 更新文件内容
+function updateFile(content: string, filePath: string): void {
+  fs.writeFileSync(filePath, content, 'utf8');
+}
+
+/**
+ * Process and update string
+ * @param input
+ * @param filePath
+ */
+export function processAndUpdateString(input: string): string {
+  const wrappers = ["'", '"', '`'];
+  let wrapper = "'";
+
+  for (const w of wrappers) {
+    if (!input.includes(w)) {
+      wrapper = w;
+      break;
+    }
+  }
+
+  const escapedString = input.replace(new RegExp(`[${wrapper}]`, 'g'), `\\${wrapper}`);
+  return `${wrapper}${escapedString}${wrapper}`;
+}
+
+/**
+ * Capitalize the first letter of a string
+ * @param str
+ */
 export function capitalizeFirstLetter(str: string): string {
   if (!str) return str;
   const [first, ...rest] = str;
