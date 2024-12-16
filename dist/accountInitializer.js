@@ -72,11 +72,11 @@ async function saveKeystore(privateKey, username, role) {
         }
     } while (pathConfirm.toLowerCase() === 'no');
     const keystoreFilePath = `${selectedPath}/${username}_keystore.json`;
-    (0, fs_1.writeFileSync)(keystoreFilePath, JSON.stringify(keystore));
+    (0, fs_1.writeFileSync)(keystoreFilePath, JSON.stringify(keystore), { mode: 0o644 });
     const keystoreFileKey = `${role.toUpperCase()}_KEYSTORE_FILE`;
     const updateDatas = {
         [keystoreFileKey]: keystoreFilePath,
-        [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword ? passwordInput : '',
+        [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword ? (0, utils_1.processAndUpdateString)(passwordInput) : '',
     };
     (0, utils_1.updateEnvFile)(updateDatas);
     console.log(`\n${(0, utils_1.cmdRedFont)('!!!Remember to backup this file!!!')}`);

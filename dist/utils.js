@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.capitalizeFirstLetter = exports.isValidTxid = exports.selectDirPrompt = exports.listDirectories = exports.isExsatDocker = exports.inputWithCancel = exports.updateEnvFile = exports.clearLines = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = exports.keystoreExist = void 0;
+exports.cmdYellowFont = exports.cmdRedFont = exports.cmdGreenFont = exports.capitalizeFirstLetter = exports.processAndUpdateString = exports.isValidTxid = exports.selectDirPrompt = exports.listDirectories = exports.isExsatDocker = exports.inputWithCancel = exports.updateEnvFile = exports.clearLines = exports.retryRequest = exports.axiosInstance = exports.deleteTempFile = exports.readSelectedPath = exports.saveSelectedPath = exports.keystoreExist = void 0;
 const axios_1 = __importDefault(require("axios"));
 const constants_1 = require("./constants");
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -299,6 +299,32 @@ function isValidTxid(txid) {
     return hexRegex.test(txid);
 }
 exports.isValidTxid = isValidTxid;
+// 更新文件内容
+function updateFile(content, filePath) {
+    fs_extra_1.default.writeFileSync(filePath, content, 'utf8');
+}
+/**
+ * Process and update string
+ * @param input
+ * @param filePath
+ */
+function processAndUpdateString(input) {
+    const wrappers = ["'", '"', '`'];
+    let wrapper = "'";
+    for (const w of wrappers) {
+        if (!input.includes(w)) {
+            wrapper = w;
+            break;
+        }
+    }
+    const escapedString = input.replace(new RegExp(`[${wrapper}]`, 'g'), `\\${wrapper}`);
+    return `${wrapper}${escapedString}${wrapper}`;
+}
+exports.processAndUpdateString = processAndUpdateString;
+/**
+ * Capitalize the first letter of a string
+ * @param str
+ */
 function capitalizeFirstLetter(str) {
     if (!str)
         return str;
