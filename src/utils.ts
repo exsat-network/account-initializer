@@ -284,7 +284,6 @@ export function isValidTxid(txid: string): boolean {
   return hexRegex.test(txid);
 }
 
-// 更新文件内容
 function updateFile(content: string, filePath: string): void {
   fs.writeFileSync(filePath, content, 'utf8');
 }

@@ -299,7 +299,6 @@ function isValidTxid(txid) {
     return hexRegex.test(txid);
 }
 exports.isValidTxid = isValidTxid;
-// 更新文件内容
 function updateFile(content, filePath) {
     fs_extra_1.default.writeFileSync(filePath, content, 'utf8');
 }

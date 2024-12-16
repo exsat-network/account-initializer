@@ -115,10 +115,10 @@ const createKeystore = async (privateKey, password, username, options) => {
         kdfparams = {
             dklen: options?.dklen ?? 32,
             salt: (0, web3_utils_1.bytesToHex)(salt).replace('0x', ''),
-            c: options?.c ?? 262144,
+            c: options?.c ?? 600000,
             prf: 'hmac-sha256',
         };
-        if (kdfparams.c < 1000) {
+        if (kdfparams.c < 100000) {
             // error when c < 1000, pbkdf2 is less secure with less iterations
             throw new web3_errors_1.PBKDF2IterationsError();
         }
