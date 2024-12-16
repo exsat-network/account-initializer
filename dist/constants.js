@@ -15,14 +15,7 @@ exports.keyStoreSchema = {
     properties: {
         crypto: {
             type: 'object',
-            required: [
-                'cipher',
-                'ciphertext',
-                'cipherparams',
-                'kdf',
-                'kdfparams',
-                'mac',
-            ],
+            required: ['cipher', 'ciphertext', 'cipherparams', 'kdf', 'kdfparams', 'mac'],
             properties: {
                 cipher: { type: 'string' },
                 ciphertext: { type: 'string' },

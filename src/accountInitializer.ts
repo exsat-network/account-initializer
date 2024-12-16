@@ -3,7 +3,21 @@ import { wordlist } from '@scure/bip39/wordlists/english';
 import HDKey from 'hdkey';
 import { PrivateKey } from '@wharfkit/antelope';
 import { writeFileSync } from 'fs';
-import { axiosInstance, clearLines, cmdGreenFont, cmdRedFont, cmdYellowFont, inputWithCancel, isExsatDocker, keystoreExist, retryRequest, selectDirPrompt, updateEnvFile } from './utils';
+import {
+  axiosInstance,
+  capitalizeFirstLetter,
+  clearLines,
+  cmdGreenFont,
+  cmdRedFont,
+  cmdYellowFont,
+  inputWithCancel,
+  isExsatDocker,
+  keystoreExist,
+  processAndUpdateString,
+  retryRequest,
+  selectDirPrompt,
+  updateEnvFile,
+} from './utils';
 import { createKeystore } from './web3';
 import WIF from 'wif';
 import { bytesToHex } from 'web3-utils';
@@ -56,7 +70,11 @@ async function saveKeystore(privateKey, username, role) {
   }
 
   // Continue with the rest of the keystore saving logic
-  const keystore = await createKeystore(`${bytesToHex(WIF.decode(privateKey.toWif(), 128).privateKey)}`, passwordInput, username);
+  const keystore = await createKeystore(
+    `${bytesToHex(WIF.decode(privateKey.toWif(), 128).privateKey)}`,
+    passwordInput,
+    username,
+  );
   const savePassword = await confirm({
     message: 'Do you want to save the password in the .env file?',
   });
@@ -75,12 +93,12 @@ async function saveKeystore(privateKey, username, role) {
   } while (pathConfirm.toLowerCase() === 'no');
 
   const keystoreFilePath = `${selectedPath}/${username}_keystore.json`;
-  writeFileSync(keystoreFilePath, JSON.stringify(keystore));
+  writeFileSync(keystoreFilePath, JSON.stringify(keystore), { mode: 0o644 });
 
   const keystoreFileKey = `${role.toUpperCase()}_KEYSTORE_FILE`;
   const updateDatas = {
     [keystoreFileKey]: keystoreFilePath,
-    [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword ? passwordInput : '',
+    [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword ? processAndUpdateString(passwordInput) : '',
   };
   updateEnvFile(updateDatas);
 
@@ -93,7 +111,8 @@ async function generateKeystore(username, role) {
   const mnemonic = generateMnemonic(wordlist);
   console.log(`${cmdYellowFont(`\nYour seed phrase: \n${mnemonic}`)}\n`);
   await input({
-    message: "Please confirm that you have backed up and saved the seed phrase (Input 'yes' after you have saved the seed phrase, and then the seed phrase will be hidden.):",
+    message:
+      "Please confirm that you have backed up and saved the seed phrase (Input 'yes' after you have saved the seed phrase, and then the seed phrase will be hidden.):",
     validate: (input) => input.toLowerCase() === 'yes' || 'Please input “yes” to continue.',
   });
   clearLines(5);
@@ -230,7 +249,9 @@ export async function changeEmail(username, email) {
     const requestChange = await requestVerificationCode(username, email, 'UPD');
     if (!requestChange) return false;
 
-    console.log(`${Font.fgCyan}${Font.bright}A verification link has been sent to your current email(${email}). Please follow the instructions in the email to change your email.${Font.reset}`);
+    console.log(
+      `${Font.fgCyan}${Font.bright}A verification link has been sent to your current email(${email}). Please follow the instructions in the email to change your email.${Font.reset}`,
+    );
     return true;
   } catch (error: any) {
     console.error('Error requesting email change: ', error.message);
@@ -242,7 +263,8 @@ async function verifyCode(username, email, type) {
   for (let attempts = 0; attempts < 3; attempts++) {
     const verificationCode = await input({
       message: 'Enter the verification code sent to your email: ',
-      validate: (input) => (input.length >= 6 && /^\d+$/.test(input) ? true : 'Password must be at least 6 digits and contain only digits.'),
+      validate: (input) =>
+        input.length >= 6 && /^\d+$/.test(input) ? true : 'Password must be at least 6 digits and contain only digits.',
     });
 
     try {
@@ -269,6 +291,7 @@ async function verifyCode(username, email, type) {
 }
 
 export async function initializeAccount(role) {
+  role = capitalizeFirstLetter(role);
   const keystoreFile = keystoreExist(role);
   if (keystoreFile) {
     console.log(`\n${Font.fgYellow}${Font.bright}An account has already been created in ${keystoreFile}.${Font.reset}`);
@@ -307,7 +330,9 @@ export async function initializeAccount(role) {
   let confirmEmail = await input({ message: 'Confirm your email address: ' });
 
   while (email !== confirmEmail || !validateEmail(email)) {
-    console.log(`${Font.fgYellow}${Font.bright}The email address does not match or is invalid. Please enter your email address again.${Font.reset}`);
+    console.log(
+      `${Font.fgYellow}${Font.bright}The email address does not match or is invalid. Please enter your email address again.${Font.reset}`,
+    );
     email = await input({
       message: 'Enter your email address(for emergency notify): ',
     });

@@ -43,7 +43,7 @@ const showMenu = async (options) => {
             await (0, query_1.queryAccount)();
             break;
         case '3':
-            await (0, btcResource_1.chargeBtcForResource)(); // Call the new function
+            await (0, btcResource_1.chargeBtcForResource)(process.env.VALIDATOR_KEYSTORE_FILE); // Call the new function
             break;
         case '4':
         case '5':

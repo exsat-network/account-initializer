@@ -1,4 +1,4 @@
-import { axiosInstance, isValidTxid, keystoreExist, retryRequest } from './utils';
+import { axiosInstance, inputWithCancel, isValidTxid, keystoreExist, retryRequest } from './utils';
 import { MIN_BTC_AMOUNT } from './constants';
 import qrcode from 'qrcode-terminal';
 import { readFileSync } from 'fs';
@@ -35,16 +35,16 @@ const getAccountInfo = async (publicKey) => {
 };
 
 const getBtcAmount = async () => {
-  return await input({
-    message: `Enter the amount of BTC to bridge (at least ${MIN_BTC_AMOUNT} BTC): `,
-    validate: (input) => {
+  return await inputWithCancel(
+    `Enter the amount of BTC to bridge (at least ${MIN_BTC_AMOUNT} BTC, Input "q" to return.): `,
+    (input) => {
       const amount = parseFloat(input);
       if (isNaN(amount) || amount < MIN_BTC_AMOUNT) {
         return `Amount must be at least ${MIN_BTC_AMOUNT} BTC. Please try again.`;
       }
       return true;
     },
-  });
+  );
 };
 
 const createPayment = async (username, amount) => {
@@ -98,9 +98,10 @@ export const chargeBtcForResource = async (encFile?) => {
     if (!username) return;
 
     const amountInput = await getBtcAmount();
+    if (!amountInput) return false;
     const paymentInfo = await createPayment(username, amountInput);
 
-    if (!paymentInfo) return;
+    if (!paymentInfo) return false;
 
     const { btcAddress, amount } = paymentInfo;
 
@@ -113,8 +114,10 @@ export const chargeBtcForResource = async (encFile?) => {
     });
 
     await submitPayment(txid, username);
+    return true;
   } catch (error: any) {
     console.error('Error processing the request: ', error.message);
+    return false;
   }
 };
 

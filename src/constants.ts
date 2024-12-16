@@ -4,7 +4,6 @@ dotenv.config();
 export const MIN_BTC_AMOUNT = 0.01;
 export const API_URL = process.env.ACCOUNT_INITIALIZER_API_BASE_URL || '';
 export const API_SECRET = process.env.ACCOUNT_INITIALIZER_API_SECRET || '';
-
 export type HexString = string;
 export type Cipher = 'aes-128-ctr' | 'aes-128-cbc' | 'aes-256-cbc';
 
@@ -64,14 +63,7 @@ export const keyStoreSchema = {
   properties: {
     crypto: {
       type: 'object',
-      required: [
-        'cipher',
-        'ciphertext',
-        'cipherparams',
-        'kdf',
-        'kdfparams',
-        'mac',
-      ],
+      required: ['cipher', 'ciphertext', 'cipherparams', 'kdf', 'kdfparams', 'mac'],
       properties: {
         cipher: { type: 'string' },
         ciphertext: { type: 'string' },

@@ -72,11 +72,11 @@ async function saveKeystore(privateKey, username, role) {
         }
     } while (pathConfirm.toLowerCase() === 'no');
     const keystoreFilePath = `${selectedPath}/${username}_keystore.json`;
-    (0, fs_1.writeFileSync)(keystoreFilePath, JSON.stringify(keystore));
+    (0, fs_1.writeFileSync)(keystoreFilePath, JSON.stringify(keystore), { mode: 0o644 });
     const keystoreFileKey = `${role.toUpperCase()}_KEYSTORE_FILE`;
     const updateDatas = {
         [keystoreFileKey]: keystoreFilePath,
-        [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword ? passwordInput : '',
+        [`${role.toUpperCase()}_KEYSTORE_PASSWORD`]: savePassword ? (0, utils_1.processAndUpdateString)(passwordInput) : '',
     };
     (0, utils_1.updateEnvFile)(updateDatas);
     console.log(`\n${(0, utils_1.cmdRedFont)('!!!Remember to backup this file!!!')}`);
@@ -233,7 +233,7 @@ async function verifyCode(username, email, type) {
     for (let attempts = 0; attempts < 3; attempts++) {
         const verificationCode = await (0, prompts_1.input)({
             message: 'Enter the verification code sent to your email: ',
-            validate: (input) => (input.length >= 6 && /^\d+$/.test(input) ? true : 'Password must be at least 6 digits and contain only digits.'),
+            validate: (input) => input.length >= 6 && /^\d+$/.test(input) ? true : 'Password must be at least 6 digits and contain only digits.',
         });
         try {
             const verifyCodeResponse = await utils_1.axiosInstance.post('/api/users/verify-code', {
@@ -258,6 +258,7 @@ async function verifyCode(username, email, type) {
     return false;
 }
 async function initializeAccount(role) {
+    role = (0, utils_1.capitalizeFirstLetter)(role);
     const keystoreFile = (0, utils_1.keystoreExist)(role);
     if (keystoreFile) {
         console.log(`\n${font_1.Font.fgYellow}${font_1.Font.bright}An account has already been created in ${keystoreFile}.${font_1.Font.reset}`);

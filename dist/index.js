@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.chargeForRegistry = exports.chargeBtcForResource = exports.queryAccount = exports.checkUsernameWithBackend = exports.processAccount = exports.initializeAccount = exports.importFromPrivateKey = exports.importFromMnemonic = exports.decryptKeystore = void 0;
+exports.chargeForRegistry = exports.chargeBtcForResource = exports.queryAccount = exports.changeEmail = exports.checkUsernameWithBackend = exports.processAccount = exports.initializeAccount = exports.importFromPrivateKey = exports.importFromMnemonic = exports.decryptKeystore = exports.updateEnvFile = exports.clearLines = void 0;
+var utils_1 = require("./utils");
+Object.defineProperty(exports, "clearLines", { enumerable: true, get: function () { return utils_1.clearLines; } });
+Object.defineProperty(exports, "updateEnvFile", { enumerable: true, get: function () { return utils_1.updateEnvFile; } });
 var web3_1 = require("./web3");
 Object.defineProperty(exports, "decryptKeystore", { enumerable: true, get: function () { return web3_1.decryptKeystore; } });
 var accountInitializer_1 = require("./accountInitializer");
@@ -9,6 +12,7 @@ Object.defineProperty(exports, "importFromPrivateKey", { enumerable: true, get: 
 Object.defineProperty(exports, "initializeAccount", { enumerable: true, get: function () { return accountInitializer_1.initializeAccount; } });
 Object.defineProperty(exports, "processAccount", { enumerable: true, get: function () { return accountInitializer_1.processAccount; } });
 Object.defineProperty(exports, "checkUsernameWithBackend", { enumerable: true, get: function () { return accountInitializer_1.checkUsernameWithBackend; } });
+Object.defineProperty(exports, "changeEmail", { enumerable: true, get: function () { return accountInitializer_1.changeEmail; } });
 var query_1 = require("./query");
 Object.defineProperty(exports, "queryAccount", { enumerable: true, get: function () { return query_1.queryAccount; } });
 var btcResource_1 = require("./btcResource");
