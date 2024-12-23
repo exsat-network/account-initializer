@@ -121,7 +121,7 @@ async function generateKeystore(username, role) {
   const master = HDKey.fromMasterSeed(Buffer.from(seed));
   const node = master.derive("m/44'/194'/0'/0/0");
 
-  const privateKey = PrivateKey.from(WIF.encode(128, node.privateKey, false).toString());
+  const privateKey = PrivateKey.from(WIF.encode(128, node.privateKey!, false).toString());
   const publicKey = privateKey.toPublic().toString();
 
   console.log(`\n${Font.fgCyan}${Font.bright}Key pair generation successful.${Font.reset}\n`);
@@ -151,7 +151,7 @@ async function inputMnemonic() {
   const master = HDKey.fromMasterSeed(Buffer.from(seed));
   const node = master.derive("m/44'/194'/0'/0/0");
 
-  const privateKey = PrivateKey.from(WIF.encode(128, node.privateKey, false).toString());
+  const privateKey = PrivateKey.from(WIF.encode(128, node.privateKey!, false).toString());
   clearLines(2);
   return privateKey;
 }
