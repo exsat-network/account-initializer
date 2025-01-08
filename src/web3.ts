@@ -151,9 +151,9 @@ export const createKeystore = async (
     );
   } else if (kdf === 'scrypt') {
     kdfparams = {
-      n: options?.n ?? 8192,
+      n: options?.n ?? 65536,
       r: options?.r ?? 8,
-      p: options?.p ?? 1,
+      p: options?.p ?? 2,
       dklen: options?.dklen ?? 32,
       salt: bytesToHex(salt).replace('0x', ''),
     };
