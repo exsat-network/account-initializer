@@ -72,7 +72,7 @@ async function saveKeystore(privateKey, username, role) {
         }
     } while (pathConfirm.toLowerCase() === 'no');
     const keystoreFilePath = `${selectedPath}/${username}_keystore.json`;
-    (0, fs_1.writeFileSync)(keystoreFilePath, JSON.stringify(keystore), { mode: 0o644 });
+    (0, fs_1.writeFileSync)(keystoreFilePath, JSON.stringify(keystore), { mode: 0o600 });
     const keystoreFileKey = `${role.toUpperCase()}_KEYSTORE_FILE`;
     const updateDatas = {
         [keystoreFileKey]: keystoreFilePath,

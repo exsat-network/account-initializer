@@ -126,9 +126,9 @@ const createKeystore = async (privateKey, password, username, options) => {
     }
     else if (kdf === 'scrypt') {
         kdfparams = {
-            n: options?.n ?? 8192,
+            n: options?.n ?? 65536,
             r: options?.r ?? 8,
-            p: options?.p ?? 1,
+            p: options?.p ?? 2,
             dklen: options?.dklen ?? 32,
             salt: (0, web3_utils_1.bytesToHex)(salt).replace('0x', ''),
         };
